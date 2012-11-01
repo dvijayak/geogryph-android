@@ -16,7 +16,7 @@ public class GeoItemizedOverlay extends ItemizedOverlay
 	private ArrayList<OverlayItem> overlays = new ArrayList<OverlayItem>();
 	private Context context;
 	
-	@SuppressLint("ParserError")
+	@SuppressLint({ "ParserError", "ParserError" })
 	public GeoItemizedOverlay (Drawable defaultMarker, Context newContext) 
 	{
 		super(boundCenterBottom(defaultMarker));		
