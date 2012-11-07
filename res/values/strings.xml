@@ -2,5 +2,20 @@
 
     <string name="app_name">GeoGryph</string>
     <string name="title_activity_main">Main</string>
+    <string name="menu_search">Search</string>
+    <string name="menu_plot">Plot</string>
+    <string name="menu_save">Save</string>
+    <string name="menu_clear">Clear</string>
+    <string name="menu_list">Buildings</string>
+    <string name="menu_about">About</string>
+    <string name="menu_empty">Empty</string>
+    <string name="dialog_buildings_title">Campus Buildings</string>
+    <string-array name="buildings">
+        <item >Athletics Centre</item>
+        <item >Animal Science &amp; Nutrition</item>
+        <item >Alexander Hall</item>
+        <item >Axelrod Building</item>
+        <item >Biodiversity Institute of Ontario</item>
+    </string-array>
 
 </resources>

@@ -6,28 +6,39 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 
+import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapController;
+import com.google.android.maps.MapView;
 import com.google.android.maps.OverlayItem;
 
-public class GeoItemizedOverlay extends ItemizedOverlay 
+public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem> 
 {
 
 	private ArrayList<OverlayItem> overlays = new ArrayList<OverlayItem>();
 	private Context context;
+	private MapView mapView;
 	private MapController mapController;	
 	
-	public GeoItemizedOverlay (Drawable defaultMarker, Context newContext, MapController newMapController) 
+	public GeoItemizedOverlay (Drawable defaultMarker, Context context, MapView mapView) 
 	{
 		super(boundCenterBottom(defaultMarker));		
-		context = newContext;
-		mapController = newMapController;
+		this.context = context;
+		this.mapView = mapView;
+		this.mapController = mapView.getController();
+		populate();
 	}
-
+	
 	public void addOverlay (OverlayItem overlay)
 	{
-		overlays.add(overlay);
-		populate();
+		mapController.animateTo(overlay.getPoint());
+		Main.savedLocation = overlay.getPoint();
+		// Only create the new overlay if it does not exist
+		if (!overlays.contains(overlay))
+		{
+			overlays.add(overlay);		
+			populate();
+		}
 	}	
 	
 	@Override
@@ -45,14 +56,28 @@ public class GeoItemizedOverlay extends ItemizedOverlay
 	@Override
 	protected boolean onTap (int index)
 	{
-		OverlayItem overlay = overlays.get(index);
+		OverlayItem overlay = overlays.get(index);		
+		GeoPoint currentCenter = mapView.getMapCenter();
+		GeoPoint newCenter = overlay.getPoint();
+		Main.savedLocation = overlay.getPoint();
 		
-		// Center on the marker
-		mapController.setCenter(overlay.getPoint());		
-		AlertDialog.Builder dialog = new AlertDialog.Builder(context);
-		dialog.setTitle(overlay.getTitle());
-		dialog.setMessage(overlay.getSnippet());
-		dialog.show();
+		// If already centered, pop up dialog
+		if (currentCenter.equals(newCenter))
+		{
+			AlertDialog.Builder dialog = new AlertDialog.Builder(context);
+			dialog.setTitle(overlay.getTitle());
+			dialog.setMessage(overlay.getSnippet());
+			dialog.show();
+		}
+		// else, center on the marker
+		else
+			mapController.animateTo(newCenter); // Pans smoothly to the point and sets it as the map center
 		return true;
+	}
+	
+	public void clear ()
+	{
+		overlays.clear();
+		populate();
 	}
 }

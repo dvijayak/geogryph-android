@@ -1,6 +1,5 @@
 package ca.uoguelph.cmer.geogryph;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -37,10 +36,10 @@ public class GeoMyLocationOverlay extends MyLocationOverlay {
 		this.mapView = mapView;
 		
 	    slips = new Drawable[4];
-	    slips[0] = context.getResources().getDrawable(R.drawable.me);
-	    slips[1] = context.getResources().getDrawable(R.drawable.me);
-	    slips[2] = context.getResources().getDrawable(R.drawable.me);
-	    slips[3] = context.getResources().getDrawable(R.drawable.me);
+	    slips[0] = context.getResources().getDrawable(R.drawable.me_resized);
+	    slips[1] = context.getResources().getDrawable(R.drawable.me_resized);
+	    slips[2] = context.getResources().getDrawable(R.drawable.me_resized);
+	    slips[3] = context.getResources().getDrawable(R.drawable.me_resized);
 	    overlayAnimationTask = new Runnable() 
 		    {		
 		        public void run() {
@@ -87,7 +86,7 @@ public class GeoMyLocationOverlay extends MyLocationOverlay {
         accuracyPaint.setStyle(Style.FILL);
         canvas.drawCircle(center.x, center.y, radius, accuracyPaint);
         
-        Log.v(TAG, "draw: " + System.currentTimeMillis());      
+//        Log.v(TAG, "draw: " + System.currentTimeMillis());      
         mapView.getProjection().toPixels(myLocation, point);
         rect.left = point.x - slips[currSlip].getIntrinsicWidth() / 2;
         rect.top = point.y - slips[currSlip].getIntrinsicHeight() / 2;
