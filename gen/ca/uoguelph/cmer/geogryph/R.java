@@ -48,13 +48,17 @@ public final class R {
         public static final int menu_search=0x7f090003;
     }
     public static final class layout {
-        public static final int main=0x7f030000;
+        public static final int dialog_about=0x7f030000;
+        public static final int main=0x7f030001;
     }
     public static final class menu {
         public static final int main=0x7f080000;
     }
     public static final class string {
         public static final int app_name=0x7f050000;
+        public static final int dialog_about_body=0x7f05000b;
+        public static final int dialog_about_positive=0x7f05000c;
+        public static final int dialog_about_title=0x7f05000a;
         public static final int dialog_buildings_title=0x7f050009;
         public static final int menu_about=0x7f050007;
         public static final int menu_clear=0x7f050005;

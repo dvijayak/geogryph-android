@@ -156,6 +156,8 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.H
 				mapView.invalidate();
 			}
 			return true;
+		case R.id.menu_about:
+			new AboutDialogFragment().show(this.getFragmentManager(), "tag_about");
 		default:
 			return super.onOptionsItemSelected(item);
 		}
@@ -270,6 +272,11 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.H
 	        }   						
 		}
 		else
-			Log.v("GeoGryph app", "No saved location!");
+		{
+			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+			dialog.setTitle("Nothing Saved");
+			dialog.setMessage("You have not saved a location saved yet!");
+			dialog.show();
+		}			
 	}
 }

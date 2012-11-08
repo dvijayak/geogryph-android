@@ -10,6 +10,11 @@
     <string name="menu_about">About</string>
     <string name="menu_empty">Empty</string>
     <string name="dialog_buildings_title">Campus Buildings</string>
+    <string name="dialog_about_title">About GeoGryph</string>
+    <string name="dialog_about_body">
+        GeoGryph aims to provide students and staff of the University of Guelph with an interactive campus map. Never face any more troubles finding and getting to places in the campus!\n\nThis app was developed by Daniel Vijayakumar under the supervision of Dr. Qusay H. Mahmoud, Director of CMER. For more information, visit the CMER website.\n\nFor the tutorial on how to create this app, as well as many other app-development tutorials, check out our academic kit.\n\nContact us at cmer@uoguelph.ca 
+    </string>
+    <string name="dialog_about_positive">Close</string>    
     <string-array name="buildings">
         <item >Athletics Centre</item>
         <item >Animal Science &amp; Nutrition</item>
