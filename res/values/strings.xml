@@ -15,12 +15,87 @@
         GeoGryph aims to provide students and staff of the University of Guelph with an interactive campus map. Never face any more troubles finding and getting to places in the campus!\n\nThis app was developed by Daniel Vijayakumar under the supervision of Dr. Qusay H. Mahmoud, Director of CMER. For more information, visit the CMER website.\n\nFor the tutorial on how to create this app, as well as many other app-development tutorials, check out our academic kit.\n\nContact us at cmer@uoguelph.ca 
     </string>
     <string name="dialog_about_positive">Close</string>    
-    <string-array name="buildings">
+    <string-array name="buildings_snippet">
         <item >Athletics Centre</item>
         <item >Animal Science &amp; Nutrition</item>
         <item >Alexander Hall</item>
         <item >Axelrod Building</item>
         <item >Biodiversity Institute of Ontario</item>
+        <item >Blackwood Hall</item>
+        <item >Central Animal Facility</item>
+        <item >Crop Science</item>
+        <item >Day Hall</item>
+        <item >Environmental Biology Annex 1</item>
+        <item >Edmund C. Bovey</item>
+        <item >Food Science</item>
+        <item >Graham Hall</item>
+        <item >H. L. Hutt</item>
+        <item >Johnston Hall</item>
+        <item >John T. Powell</item>
+        <item >Landscape Architecture</item>
+        <item >Macdonald Hall</item>
+        <item >MacKinnon</item>
+        <item >MacNaughton</item>
+        <item >Macdonald Steward Hall</item>
+        <item >Massey Hall</item>
+        <item >MacLachlan</item>
+        <item >Macdonald Institute</item>
+        <item >McLaughlin Library</item>
+        <item >Macdonald Stewart Art Centre</item>
+        <item >Ontario Veterinary College</item>
+        <item >OVC Pathobiology AHL</item>
+        <item >Reynolds</item>
+        <item >Richards</item>
+        <item >Rozanski Hall</item>
+        <item >Science Complex</item>
+        <item >TransCanada Institute</item>
+        <item >Thornbrough</item>
+        <item >Vehicle Services</item>
+        <item >War Memorial Hall</item>
+        <item >Zavitz Hall</item>
+        <item >Zoology Annex 1</item>
+        <item >Zoology Annex 2</item>              
+    </string-array>
+    <string-array name="buildings_title">
+		<item >AC</item>
+		<item >ANNU</item>
+		<item >ALEX</item>
+		<item >AXEL</item>
+		<item >BIO</item>
+		<item >BWH</item>
+		<item >CAF</item>
+		<item >CRSC</item>
+		<item >DH</item>
+		<item >EBA</item>
+		<item >ECB</item>
+		<item >FS</item>
+		<item >GRHM</item>
+		<item >HUTT</item>
+		<item >JHNH</item>
+		<item >JTP</item>
+		<item >LA</item>
+		<item >MAC</item>
+		<item >MACK</item>
+		<item >MACN</item>
+		<item >MACS</item>
+		<item >MASS</item>
+		<item >MCLN</item>
+		<item >MINS</item>
+		<item >MLIB</item>
+		<item >MSAC</item>
+		<item >OVC</item>
+		<item >PAHL</item>
+		<item >REYN</item>
+		<item >RICH</item>
+		<item >ROZH</item>
+		<item >SCIE</item>
+		<item >TCI</item>
+		<item >THRN</item>
+		<item >VSER</item>
+		<item >WMEM</item>
+		<item >ZAV</item>
+		<item >ZOOA</item>
+		<item >ZOOB</item>						           
     </string-array>
 
 </resources>

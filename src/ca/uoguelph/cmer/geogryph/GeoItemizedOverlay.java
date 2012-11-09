@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.SharedPreferences.Editor;
 import android.graphics.drawable.Drawable;
 
 import com.google.android.maps.GeoPoint;
@@ -31,8 +32,15 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 	
 	public void addOverlay (OverlayItem overlay)
 	{
-		mapController.animateTo(overlay.getPoint());
-		Main.savedLocation = overlay.getPoint();
+		GeoPoint overlayPoint = overlay.getPoint();
+		int newLat = overlayPoint.getLatitudeE6();
+		int newLon = overlayPoint.getLongitudeE6();
+		Editor editor = Main.persistentPrimitives.edit();
+		editor.putInt("lat", newLat);
+		editor.putInt("lon", newLon);
+		editor.commit(); // Do not forget to commit the edits!
+		
+		mapController.animateTo(overlayPoint);		
 		// Only create the new overlay if it does not exist
 		if (!overlays.contains(overlay))
 		{
@@ -59,7 +67,12 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 		OverlayItem overlay = overlays.get(index);		
 		GeoPoint currentCenter = mapView.getMapCenter();
 		GeoPoint newCenter = overlay.getPoint();
-		Main.savedLocation = overlay.getPoint();
+		int newLat = newCenter.getLatitudeE6();
+		int newLon = newCenter.getLongitudeE6();
+		Editor editor = Main.persistentPrimitives.edit();
+		editor.putInt("lat", newLat);
+		editor.putInt("lon", newLon);		
+		editor.commit(); // Do not forget to commit the edits!
 		
 		// If already centered, pop up dialog
 		if (currentCenter.equals(newCenter))

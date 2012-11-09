@@ -18,10 +18,13 @@ public class PathOverlay extends Overlay {
 	private Point pA;
 	private Point pB;
 	
+	private Paint paint;
+	private Path path;
+	
 	public PathOverlay (GeoPoint A, GeoPoint B) 
 	{
 		this.A = A;
-		this.B = B;
+		this.B = B;				
 	}
 	
 	public void draw(Canvas canvas, MapView mapView, boolean shadow)
@@ -29,20 +32,20 @@ public class PathOverlay extends Overlay {
 		super.draw(canvas, mapView, shadow);
 						
 		if (shadow != true)			
-		{
-			Paint paint = new Paint();
+		{			
+			paint = new Paint();
 			paint.setDither(true);
-			paint.setARGB(153, 0, 0, 205);
+			paint.setARGB(80, 205, 0, 205);
 			paint.setStyle(Paint.Style.FILL_AND_STROKE);
 			paint.setStrokeJoin(Paint.Join.ROUND);
 			paint.setStrokeCap(Paint.Cap.ROUND);
-			paint.setStrokeWidth(20);
+			paint.setStrokeWidth(12);
 			
 			Projection projection = mapView.getProjection();
 			pA = projection.toPixels(A, null);
 			pB = projection.toPixels(B, null);
-			
-			Path path = new Path();
+					
+			path = new Path();
 			path.moveTo(pB.x, pB.y);
 			path.lineTo(pA.x, pA.y);
 			
