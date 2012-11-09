@@ -28,7 +28,7 @@ import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 
-public class Main extends MapActivity implements CampusBuildingsDialogFragment.Contract, AsynchronousHTTP.Contract, SharedPreferences
+public class Main extends MapActivity implements CampusBuildingsDialogFragment.Contract, AsynchronousHTTP.Contract, SharedPreferences, Runnable
 {
 	// Map objects & parameters
 	private GeoMyLocationOverlay me;
@@ -47,14 +47,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	private final GeoPoint campus_center = new GeoPoint(43529201, -80228713);
 
 	// Campus buildings	
-	protected OverlayItem[] buildings/* = 
-		{
-			new OverlayItem(new GeoPoint(43533294, -80224637), "AC", "Athletics Centre"),
-			new OverlayItem(new GeoPoint(43529492,-80229779), "ANNU", "Animal Science & Nutrition"),
-			new OverlayItem(new GeoPoint(43529420,-80227644), "ALEX", "Alexander Hall"),
-			new OverlayItem(new GeoPoint(43528690,-80226075), "AXEL", "Axelrod Building"),
-			new OverlayItem(new GeoPoint(43528200,-80229038), "BIO", "Biodiversity Institute of Ontario")
-		}*/;
+	protected OverlayItem[] buildings;
 	private CampusBuildingsDialogFragment buildingsDialog; // Dialog for displaying list
 	
 	// Other objects	
@@ -73,21 +66,22 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         mapView.preLoad();
         mapView.setBuiltInZoomControls(true);
         mapController = mapView.getController(); // Controller allows to set the map zoom and map center
+         
+        // Overlays and center map initially
+        List<Overlay> mapOverlays = mapView.getOverlays();
+        me = new GeoMyLocationOverlay(this, mapView);
+        mapView.postInvalidate();
+        mapOverlays.add(me);
 		try
 		{
 			mapController.animateTo(me.getMyLocation());
 		}
 		catch (java.lang.NullPointerException e)
 		{
+			me.runOnFirstFix(new Thread(this));
 			mapController.animateTo(stone_gordon);
 		}
-        mapController.setZoom(desiredZoom);               
-        List<Overlay> mapOverlays = mapView.getOverlays();
-        
-        // Overlays
-        me = new GeoMyLocationOverlay(this, mapView);       
-        mapView.postInvalidate();
-        mapOverlays.add(me);
+        mapController.setZoom(desiredZoom);                             
                                
         // Campus buildings        
         String title[] = getResources().getStringArray(R.array.buildings_title);
@@ -133,8 +127,14 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	    inflater.inflate(R.menu.main, menu);
 	    this.getActionBar().setHomeButtonEnabled(true); // Ensures that the app icon is clickable	    
 	    return true;
+	}	
+
+	@Override
+	public void run() 
+	{
+		mapController.animateTo(me.getMyLocation());
 	}
-	
+    
 	@Override
 	public boolean onOptionsItemSelected (MenuItem item)
 	{
@@ -144,7 +144,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 			// App icon in action bar clicked; go to user's current location				
 			try
 			{
-				mapController.animateTo(me.getMyLocation());
+				mapController.animateTo(me.getMyLocation());				
 			}
 			catch (java.lang.NullPointerException e)
 			{
@@ -354,7 +354,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 			dialog.show();
 		}			
 	}
-
+	
 	@Override
 	public boolean contains(String key) {
 		// TODO Auto-generated method stub

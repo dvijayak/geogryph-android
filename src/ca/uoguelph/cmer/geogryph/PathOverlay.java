@@ -35,11 +35,11 @@ public class PathOverlay extends Overlay {
 		{			
 			paint = new Paint();
 			paint.setDither(true);
-			paint.setARGB(80, 205, 0, 205);
+			paint.setARGB(255, 205, 0, 205);
 			paint.setStyle(Paint.Style.FILL_AND_STROKE);
 			paint.setStrokeJoin(Paint.Join.ROUND);
 			paint.setStrokeCap(Paint.Cap.ROUND);
-			paint.setStrokeWidth(12);
+			paint.setStrokeWidth(8);
 			
 			Projection projection = mapView.getProjection();
 			pA = projection.toPixels(A, null);
