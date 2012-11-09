@@ -24,32 +24,32 @@ public class PathOverlay extends Overlay {
 	public PathOverlay (GeoPoint A, GeoPoint B) 
 	{
 		this.A = A;
-		this.B = B;				
+		this.B = B;	
+		path = new Path();
+		paint = new Paint();
+		paint.setDither(true);
+		paint.setARGB(255, 205, 0, 205);
+		paint.setStyle(Paint.Style.FILL_AND_STROKE);
+		paint.setStrokeJoin(Paint.Join.ROUND);
+		paint.setStrokeCap(Paint.Cap.ROUND);
+		paint.setStrokeWidth(8);
 	}
 	
 	public void draw(Canvas canvas, MapView mapView, boolean shadow)
 	{
-		super.draw(canvas, mapView, shadow);
+		super.draw(canvas, mapView, false);
 						
-		if (shadow != true)			
-		{			
-			paint = new Paint();
-			paint.setDither(true);
-			paint.setARGB(255, 205, 0, 205);
-			paint.setStyle(Paint.Style.FILL_AND_STROKE);
-			paint.setStrokeJoin(Paint.Join.ROUND);
-			paint.setStrokeCap(Paint.Cap.ROUND);
-			paint.setStrokeWidth(8);
-			
+//		if (shadow != true)			
+//		{								
 			Projection projection = mapView.getProjection();
 			pA = projection.toPixels(A, null);
 			pB = projection.toPixels(B, null);
-					
-			path = new Path();
+								
+			path.rewind();
 			path.moveTo(pB.x, pB.y);
 			path.lineTo(pA.x, pA.y);
 			
 			canvas.drawPath(path, paint);
-		}
+//		}
 	}
 }

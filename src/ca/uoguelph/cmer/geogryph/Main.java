@@ -273,8 +273,8 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         // build JSON object
         try
         {
-        	JSONObject response = new JSONObject(result);
-        	
+        	List<Overlay> mapOverlays = mapView.getOverlays();
+        	JSONObject response = new JSONObject(result);        	
         	if (response.get("status").equals("OK"))
         	{
         		JSONArray routes = response.getJSONArray("routes");
@@ -302,7 +302,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         						{
         							GeoPoint A = smoothedPath.get(point - 1), B = smoothedPath.get(point);
         							path = new PathOverlay(A, B);
-        							Main.mapView.getOverlays().add(path);        							         							        							
+        							mapOverlays.add(path);        							         							        							
         						}
         						
         						// Scroll to the last point (destination point)
@@ -313,7 +313,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
             						OverlayItem overlay = new OverlayItem(destination, "Destination", "You want to go here");			
             						destinationOverlay = new GeoItemizedOverlay(getResources().getDrawable(R.drawable.blue_marker_resized), this, mapView);
             						destinationOverlay.addOverlay(overlay);
-            						mapView.getOverlays().add(destinationOverlay);
+            						mapOverlays.add(destinationOverlay);
             						mapController.animateTo(destination);
             					}
         					}        					        					        						      					        					        					
