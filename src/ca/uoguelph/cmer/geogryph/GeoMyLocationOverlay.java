@@ -9,7 +9,6 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Handler;
-import android.util.Log;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapView;
@@ -21,7 +20,7 @@ public class GeoMyLocationOverlay extends MyLocationOverlay {
 	private Paint accuracyPaint;
     private Point center;
     private Point left;
-    private static final String TAG = "My App";
+//    private static final String TAG = "My App";
     private Drawable[] slips;
     private final MapView mapView;
     private int currSlip = 0;

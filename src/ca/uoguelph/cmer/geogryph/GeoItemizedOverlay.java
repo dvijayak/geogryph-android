@@ -1,7 +1,6 @@
 package ca.uoguelph.cmer.geogryph;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import android.app.AlertDialog;
@@ -13,7 +12,6 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
-import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 
 public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem> implements Centerable
@@ -30,7 +28,8 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem> implements 
 		super(boundCenterBottom(defaultMarker));		
 		this.context = context; // Activity that this belongs to
 		this.mapView = mapView;
-		this.mapController = mapView.getController();				
+		this.mapController = mapView.getController();	
+		populate();
 	}
 	
 	private static String getKey (OverlayItem overlay)

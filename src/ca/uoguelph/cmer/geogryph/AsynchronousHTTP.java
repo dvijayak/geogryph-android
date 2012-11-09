@@ -9,7 +9,6 @@ import java.net.URL;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.google.android.maps.MapView;
 

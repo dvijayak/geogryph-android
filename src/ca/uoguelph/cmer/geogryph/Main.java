@@ -16,7 +16,6 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -34,7 +33,8 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	private GeoMyLocationOverlay me;
 	private static MapView mapView;
 	private GeoItemizedOverlay campusBuildingsOverlay;
-	private GeoItemizedOverlay destinationOverlay; 
+//	private GeoItemizedOverlay destinationOverlay;
+	private List<Overlay> directionsPolyline;
 	private static MapController mapController;
 	private final int minZoom = 12;
 	private final int desiredZoom = 18;
@@ -89,12 +89,13 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         int lat[] = getResources().getIntArray(R.array.buildings_lat);
         int lon[] = getResources().getIntArray(R.array.buildings_lon);
         int totalBuildings = title.length;
-        buildings = new OverlayItem[totalBuildings];       
+        buildings = new OverlayItem[totalBuildings];    ;   
         for (int i = 0; i < totalBuildings; i++)
         	buildings[i] = new OverlayItem(new GeoPoint(lat[i], lon[i]), title[i], snippet[i]);
         
         campusBuildingsOverlay = new GeoItemizedOverlay(getResources().getDrawable(R.drawable.university_resized), this, mapView);       
         mapOverlays.add(campusBuildingsOverlay);
+        directionsPolyline = new ArrayList<Overlay>();
         
         // Other objects
         persistentPrimitives = getPreferences(MODE_PRIVATE); // used to store and read saved location
@@ -157,7 +158,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		case R.id.menu_plot:						
 			int lat = persistentPrimitives.getInt("lat", stone_gordon.getLatitudeE6());
 			int lon = persistentPrimitives.getInt("lon", stone_gordon.getLongitudeE6());
-			GeoPoint destination = new GeoPoint(lat, lon);
+			GeoPoint destination = new GeoPoint(lat, lon);			
 			plotDirections(me.getMyLocation(), destination);
 			return true;
 		case R.id.menu_save:
@@ -177,6 +178,10 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 			return true;
 		case R.id.menu_clear:
 			campusBuildingsOverlay.clear();
+			List<Overlay> mapOverlays = mapView.getOverlays();
+			for (Overlay path : directionsPolyline)
+				mapOverlays.remove(path);
+			directionsPolyline.clear();
 			return true;
 		case R.id.menu_about:
 			new AboutDialogFragment().show(this.getFragmentManager(), "tag_about");
@@ -270,7 +275,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         // build JSON object
         try
         {
-        	List<Overlay> mapOverlays = mapView.getOverlays();
+        	List<Overlay> mapOverlays = mapView.getOverlays();        	
         	JSONObject response = new JSONObject(result);        	
         	if (response.get("status").equals("OK"))
         	{
@@ -299,7 +304,8 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         						{
         							GeoPoint A = smoothedPath.get(point - 1), B = smoothedPath.get(point);
         							path = new PathOverlay(A, B);
-        							mapOverlays.add(path);        							         							        							
+        							directionsPolyline.add(path);
+        							mapOverlays.add(path);          							
         						}
         						
         						// Scroll to the last point (destination point)
@@ -328,7 +334,13 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	private void plotDirections (GeoPoint origin, GeoPoint destination)
 	{
 		if (destination != null)
-		{			
+		{	
+			// Clear existing polyline
+			List<Overlay> mapOverlays = mapView.getOverlays();
+			for (Overlay path : directionsPolyline)
+				mapOverlays.remove(path);
+			directionsPolyline.clear();
+			
 			// Build HTTP request for Google Directions
 			String request = buildHTTPRequest(origin, destination, true);
 			
