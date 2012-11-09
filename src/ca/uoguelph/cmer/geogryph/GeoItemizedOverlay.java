@@ -1,6 +1,8 @@
 package ca.uoguelph.cmer.geogryph;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -11,12 +13,14 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
+import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 
-public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem> 
+public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem> implements Centerable
 {
 
-	private ArrayList<OverlayItem> overlays = new ArrayList<OverlayItem>();
+//	private ArrayList<OverlayItem> overlays = new ArrayList<OverlayItem>();
+	private Map<String, OverlayItem> overlays = new HashMap<String, OverlayItem>();
 	private Context context;
 	private MapView mapView;
 	private MapController mapController;	
@@ -24,30 +28,41 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 	public GeoItemizedOverlay (Drawable defaultMarker, Context context, MapView mapView) 
 	{
 		super(boundCenterBottom(defaultMarker));		
-		this.context = context;
+		this.context = context; // Activity that this belongs to
 		this.mapView = mapView;
-		this.mapController = mapView.getController();
-		populate();
+		this.mapController = mapView.getController();				
 	}
 	
-	public void addOverlay (OverlayItem overlay)
+	private static String getKey (OverlayItem overlay)
 	{
-		GeoPoint overlayPoint = overlay.getPoint();
-		int newLat = overlayPoint.getLatitudeE6();
-		int newLon = overlayPoint.getLongitudeE6();
-		Editor editor = Main.persistentPrimitives.edit();
-		editor.putInt("lat", newLat);
-		editor.putInt("lon", newLon);
-		editor.commit(); // Do not forget to commit the edits!
-		
-		mapController.animateTo(overlayPoint);		
-		// Only create the new overlay if it does not exist
-		if (!overlays.contains(overlay))
+		if (overlay != null)
 		{
-			overlays.add(overlay);		
-			populate();
+			return overlay.getTitle() + overlay.getSnippet();
 		}
+		else
+			return null;
+	}
+	
+	public void addOverlay (OverlayItem overlay, Drawable marker)
+	{		
+		// Assign an alternate marker if provided; else the default is used
+		if (marker != null)
+			overlay.setMarker(boundCenterBottom(marker));
+		overlays.put(getKey(overlay), overlay);		
+		snapToMarker(overlay);
 	}	
+	
+	public boolean containsOverlay (OverlayItem overlay)
+	{		
+		return (overlay != null) ? overlays.containsKey(getKey(overlay)) : null;
+	}
+	
+	public void removeOverlay (OverlayItem overlay)
+	{
+		if (overlay != null)		
+			if (containsOverlay(overlay))
+				overlays.remove(getKey(overlay));	
+	}
 	
 	@Override
 	public int size () 
@@ -58,13 +73,35 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 	@Override
 	protected OverlayItem createItem (int i) 
 	{		
-		return overlays.get(i);
+		Object[] array = overlays.values().toArray();
+		OverlayItem overlay = (OverlayItem) array[i];
+		return overlay;
 	}
 	
 	@Override
 	protected boolean onTap (int index)
 	{
-		OverlayItem overlay = overlays.get(index);		
+		Object[] array = overlays.values().toArray();
+		OverlayItem overlay = (OverlayItem) array[index];		
+		snapToMarker(overlay);
+		return true;
+	}		
+	
+	public void clear ()
+	{
+		overlays.clear();
+		populate();
+	}
+	
+	// Populate only when all insertions/deletions in a batch have been performed 
+	public void commit ()
+	{
+		populate();
+	}
+
+	@Override
+	public void snapToMarker(OverlayItem overlay) 
+	{
 		GeoPoint currentCenter = mapView.getMapCenter();
 		GeoPoint newCenter = overlay.getPoint();
 		int newLat = newCenter.getLatitudeE6();
@@ -85,12 +122,5 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 		// else, center on the marker
 		else
 			mapController.animateTo(newCenter); // Pans smoothly to the point and sets it as the map center
-		return true;
-	}
-	
-	public void clear ()
-	{
-		overlays.clear();
-		populate();
 	}
 }

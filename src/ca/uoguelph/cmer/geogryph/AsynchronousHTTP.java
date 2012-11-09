@@ -13,7 +13,8 @@ import android.util.Log;
 
 import com.google.android.maps.MapView;
 
-public class AsynchronousHTTP extends AsyncTask<String, Void, String> {
+public class AsynchronousHTTP extends AsyncTask<String, Void, String> 
+{
 	
 	protected String result;
 	

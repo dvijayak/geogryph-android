@@ -176,11 +176,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 			dialog.show();
 			return true;
 		case R.id.menu_clear:
-			if (!(mapView.getOverlays().isEmpty()))
-			{
-				mapView.getOverlays().clear();
-				mapView.invalidate();
-			}
+			campusBuildingsOverlay.clear();
 			return true;
 		case R.id.menu_about:
 			new AboutDialogFragment().show(this.getFragmentManager(), "tag_about");
@@ -193,7 +189,8 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	@Override
 	public void addOverlay(int which) 
 	{
-		campusBuildingsOverlay.addOverlay(buildings[which]);
+		campusBuildingsOverlay.addOverlay(buildings[which], null);
+		campusBuildingsOverlay.commit();
 	}			
 	
 	// Construct a valid HTTP request for using the Directions REST Web Service
@@ -310,10 +307,10 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
             					{
             						// Create the destination marker and add it to the map
             						GeoPoint destination = smoothedPath.get(point - 1);
-            						OverlayItem overlay = new OverlayItem(destination, "Destination", "You want to go here");			
-            						destinationOverlay = new GeoItemizedOverlay(getResources().getDrawable(R.drawable.blue_marker_resized), this, mapView);
-            						destinationOverlay.addOverlay(overlay);
-            						mapOverlays.add(destinationOverlay);
+            						OverlayItem overlay = new OverlayItem(destination, "Destination", "You want to go here");			            						
+            						campusBuildingsOverlay.addOverlay(overlay, getResources().getDrawable(R.drawable.blue_marker_resized));
+            						campusBuildingsOverlay.commit();
+            						mapOverlays.add(campusBuildingsOverlay);
             						mapController.animateTo(destination);
             					}
         					}        					        					        						      					        					        					
