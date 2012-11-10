@@ -16,8 +16,6 @@ import com.google.android.maps.OverlayItem;
 
 public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem> implements Centerable
 {
-
-//	private ArrayList<OverlayItem> overlays = new ArrayList<OverlayItem>();
 	private Map<String, OverlayItem> overlays = new HashMap<String, OverlayItem>();
 	private Context context;
 	private MapView mapView;
@@ -32,12 +30,11 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem> implements 
 		populate();
 	}
 	
+	// Obtain the key of the overlay item (concatenation of title and snippet)
 	private static String getKey (OverlayItem overlay)
 	{
-		if (overlay != null)
-		{
-			return overlay.getTitle() + overlay.getSnippet();
-		}
+		if (overlay != null)		
+			return overlay.getTitle() + overlay.getSnippet();		
 		else
 			return null;
 	}
@@ -88,7 +85,7 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem> implements 
 	
 	public void clear ()
 	{
-		overlays.clear();
+		overlays.clear();		
 		populate();
 	}
 	

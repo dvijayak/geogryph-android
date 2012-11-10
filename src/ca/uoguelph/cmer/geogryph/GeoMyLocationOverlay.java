@@ -2,98 +2,65 @@ package ca.uoguelph.cmer.geogryph;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Paint.Style;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.os.Handler;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
-import com.google.android.maps.Projection;
 
 public class GeoMyLocationOverlay extends MyLocationOverlay {
 
-	private Paint accuracyPaint;
-    private Point center;
-    private Point left;
-//    private static final String TAG = "My App";
-    private Drawable[] slips;
-    private final MapView mapView;
-    private int currSlip = 0;
-    Point point = new Point();
-    Rect rect = new Rect();
-    private Handler handler = new Handler();
-    private Runnable overlayAnimationTask;
+	private final Context context;
+	private final MapView mapView;
+    private Drawable marker;       
+    private Point point = new Point();
+    private Rect rect = new Rect();
 	
 	public GeoMyLocationOverlay(Context context, MapView mapView) 
 	{
 		super(context, mapView);
+		this.context = context;
 		this.mapView = mapView;
+		marker = context.getResources().getDrawable((R.drawable.me_resized));
+		point = new Point();
+		rect = new Rect();
+        // Set the bounds of the drawn marker
+        rect.left = -(marker.getIntrinsicWidth() / 2);
+        rect.top = -(marker.getIntrinsicHeight());
+        rect.right = marker.getIntrinsicWidth() / 2;
+        rect.bottom = 0;       
+        marker.setBounds(rect);
+	}
+	
+	@Override
+	public synchronized boolean draw (Canvas canvas, MapView mapView, boolean shadow, long when)
+	{
+		if (getLastFix() == null)
+			return super.draw(canvas, mapView, shadow, when);
 		
-	    slips = new Drawable[4];
-	    slips[0] = context.getResources().getDrawable(R.drawable.me_resized);
-	    slips[1] = context.getResources().getDrawable(R.drawable.me_resized);
-	    slips[2] = context.getResources().getDrawable(R.drawable.me_resized);
-	    slips[3] = context.getResources().getDrawable(R.drawable.me_resized);
-	    overlayAnimationTask = new Runnable() 
-		    {		
-		        public void run() {
-		            currSlip = (currSlip + 1) % slips.length;
-		            GeoMyLocationOverlay.this.mapView.invalidate();
-		            handler.removeCallbacks(overlayAnimationTask);
-		            handler.postDelayed(overlayAnimationTask, 200);
-		
-		        }		
-		    };
-	    handler.removeCallbacks(overlayAnimationTask);
-	    handler.postAtTime(overlayAnimationTask, 100);
+		if (marker != null)
+		{		
+			GeoPoint lastFix = new GeoPoint((int)(getLastFix().getLatitude() * 1e6), (int)(getLastFix().getLongitude() * 1e6));
+	 		// Translate the GeoPoint of the user's location to screen pixels
+			mapView.getProjection().toPixels(lastFix, point);
+			drawAt(canvas, marker, point.x, point.y, shadow);
+		}
+		else if (getMyLocation() != null);		
+			drawMyLocation(canvas, mapView, getLastFix(), getMyLocation(), when);
+				
+		return super.draw(canvas, mapView, shadow, when);
 	}
 
  	@Override
     protected void drawMyLocation(Canvas canvas, MapView mapView, Location lastFix, GeoPoint myLocation, long when) 
- 	{ 
-        accuracyPaint = new Paint();
-        accuracyPaint.setAntiAlias(true);
-        accuracyPaint.setStrokeWidth(2.0f);
-        center = new Point();
-        left = new Point();
+ 	{  		         	
+        mapView.getProjection().toPixels(myLocation, point);       
         
-        Projection projection = mapView.getProjection();
-        double latitude = lastFix.getLatitude();
-        double longitude = lastFix.getLongitude();
-        float accuracy = lastFix.getAccuracy();
-                    
-        float[] result = new float[1];
-        
-        Location.distanceBetween(latitude, longitude, latitude, longitude + 1, result);
-        float longitudeLineDistance = result[0];
-        
-        GeoPoint leftGeo = new GeoPoint((int)(latitude*1e6), (int)((longitude-accuracy/longitudeLineDistance)*1e6));
-        projection.toPixels(leftGeo, left);
-        projection.toPixels(myLocation, center);
-        int radius = center.x - left.x;
-        
-        accuracyPaint.setColor(0xff6666ff);
-        accuracyPaint.setStyle(Style.STROKE);
-        canvas.drawCircle(center.x, center.y, radius, accuracyPaint);
-        
-        accuracyPaint.setColor(0x186666ff);
-        accuracyPaint.setStyle(Style.FILL);
-        canvas.drawCircle(center.x, center.y, radius, accuracyPaint);
-        
-//        Log.v(TAG, "draw: " + System.currentTimeMillis());      
-        mapView.getProjection().toPixels(myLocation, point);
-        rect.left = point.x - slips[currSlip].getIntrinsicWidth() / 2;
-        rect.top = point.y - slips[currSlip].getIntrinsicHeight() / 2;
-        rect.right = point.x + slips[currSlip].getIntrinsicWidth() / 2;
-        rect.bottom = point.y + slips[currSlip].getIntrinsicHeight() / 2;
-        slips[currSlip].setBounds(rect);
-        slips[currSlip].draw(canvas);
-            
+        // Draw the marker on the canvas
+        marker.draw(canvas);         
     } 
 
 }

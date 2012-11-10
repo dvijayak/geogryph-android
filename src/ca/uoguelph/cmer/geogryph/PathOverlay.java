@@ -39,8 +39,8 @@ public class PathOverlay extends Overlay {
 	{
 		super.draw(canvas, mapView, false);
 						
-//		if (shadow != true)			
-//		{								
+		if (shadow != true)			
+		{								
 			Projection projection = mapView.getProjection();
 			pA = projection.toPixels(A, null);
 			pB = projection.toPixels(B, null);
@@ -50,6 +50,6 @@ public class PathOverlay extends Overlay {
 			path.lineTo(pA.x, pA.y);
 			
 			canvas.drawPath(path, paint);
-//		}
+		}
 	}
 }

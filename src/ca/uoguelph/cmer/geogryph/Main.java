@@ -24,13 +24,14 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
+import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 
 public class Main extends MapActivity implements CampusBuildingsDialogFragment.Contract, AsynchronousHTTP.Contract, SharedPreferences, Runnable
 {
 	// Map objects & parameters
-	private GeoMyLocationOverlay me;
+	private MyLocationOverlay me;
 	private static MapView mapView;
 	private GeoItemizedOverlay campusBuildingsOverlay;
 //	private GeoItemizedOverlay destinationOverlay;
@@ -177,10 +178,10 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 			dialog.show();
 			return true;
 		case R.id.menu_clear:
-			campusBuildingsOverlay.clear();
+			campusBuildingsOverlay.clear();			
 			List<Overlay> mapOverlays = mapView.getOverlays();
 			for (Overlay path : directionsPolyline)
-				mapOverlays.remove(path);
+				mapOverlays.remove(path);			
 			directionsPolyline.clear();
 			return true;
 		case R.id.menu_about:
