@@ -29,8 +29,6 @@ public class PathOverlay extends Overlay {
 		paint.setDither(true);
 		paint.setARGB(180, 200, 0, 200);
 		paint.setStyle(Paint.Style.FILL_AND_STROKE);
-		paint.setStrokeJoin(Paint.Join.ROUND);
-		paint.setStrokeCap(Paint.Cap.ROUND);
 		paint.setStrokeWidth(8);
 	}
 	
