@@ -346,7 +346,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 			directionsPolyline.clear();
 			
 			// Create origin marker
-			markersOverlay.addOverlay(new OverlayItem(me.getMyLocation(), "Origin", "You are here"), getResources().getDrawable(R.drawable.me_resized));
+			markersOverlay.addOverlay(new OverlayItem(me.getMyLocation(), "Origin", "You started from here"), getResources().getDrawable(R.drawable.me_resized));
 			markersOverlay.commit();
 			
 			// Build HTTP request for Google Directions
