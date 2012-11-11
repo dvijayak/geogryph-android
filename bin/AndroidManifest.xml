@@ -16,7 +16,7 @@
 		
 		<activity android:name="Main"
 		    android:label="@string/app_name" 
-		    android:hardwareAccelerated="true" > <!-- HW Accel is disabled to solve openGlrenderer issues with texture sizes for big path overlays -->
+		    android:hardwareAccelerated="true" > <!-- HW Accel might be disabled to solve openGlrenderer issues with texture sizes for big path overlays -->
 		    		    
 		    <intent-filter>
 			    <action android:name="android.intent.action.MAIN" />
