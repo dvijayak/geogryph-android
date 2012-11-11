@@ -28,7 +28,7 @@ public class PathOverlay extends Overlay {
 		path = new Path();
 		paint = new Paint();
 		paint.setDither(true);
-		paint.setARGB(255, 205, 0, 205);
+		paint.setARGB(100, 205, 0, 205);
 		paint.setStyle(Paint.Style.FILL_AND_STROKE);
 		paint.setStrokeJoin(Paint.Join.ROUND);
 		paint.setStrokeCap(Paint.Cap.ROUND);
@@ -45,11 +45,12 @@ public class PathOverlay extends Overlay {
 			pA = projection.toPixels(A, null);
 			pB = projection.toPixels(B, null);
 								
-			path.rewind();
-			path.moveTo(pB.x, pB.y);
-			path.lineTo(pA.x, pA.y);
+//			path.rewind();
+//			path.moveTo(pB.x, pB.y);
+//			path.lineTo(pA.x, pA.y);
 			
-			canvas.drawPath(path, paint);
+//			canvas.drawPath(path, paint);
+			canvas.drawLine(pA.x, pA.y, pB.x, pB.y, paint);
 		}
 	}
 }
