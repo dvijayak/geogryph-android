@@ -183,6 +183,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 			for (Overlay path : directionsPolyline)
 				mapOverlays.remove(path);			
 			directionsPolyline.clear();
+			mapView.invalidate();
 			return true;
 		case R.id.menu_about:
 			new AboutDialogFragment().show(this.getFragmentManager(), "tag_about");
@@ -275,11 +276,12 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	{
         // build JSON object
         try
-        {
-        	List<Overlay> mapOverlays = mapView.getOverlays();        	
+        {        	
         	JSONObject response = new JSONObject(result);        	
         	if (response.get("status").equals("OK"))
         	{
+        		List<Overlay> mapOverlays = mapView.getOverlays();
+            	List<GeoPoint> pathPoints = new ArrayList<GeoPoint>();
         		JSONArray routes = response.getJSONArray("routes");
         		for (int r = 0; r < routes.length(); r++)
         		{
@@ -304,9 +306,11 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         						for (point = 1; point < length; point++)
         						{
         							GeoPoint A = smoothedPath.get(point - 1), B = smoothedPath.get(point);
-        							path = new PathOverlay(A, B);
-        							directionsPolyline.add(path);
-        							mapOverlays.add(path);          							
+        							pathPoints.add(A);
+        							pathPoints.add(B);
+//        							path = new PathOverlay(A, B);
+//        							directionsPolyline.add(path);
+//        							mapOverlays.add(path);          							
         						}
         						
         						// Scroll to the last point (destination point)
@@ -316,14 +320,18 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
             						GeoPoint destination = smoothedPath.get(point - 1);
             						OverlayItem overlay = new OverlayItem(destination, "Destination", "You want to go here");			            						
             						campusBuildingsOverlay.addOverlay(overlay, getResources().getDrawable(R.drawable.blue_marker_resized));
-            						campusBuildingsOverlay.commit();
-            						mapOverlays.add(campusBuildingsOverlay);
+            						campusBuildingsOverlay.commit();            						
             						mapController.animateTo(destination);
             					}
         					}        					        					        						      					        					        					
         				}
         			}
         		}
+        		// Render the complete route polyline
+        		Overlay path = new PathOverlay(pathPoints.toArray(new GeoPoint[pathPoints.size()]), mapView);
+        		directionsPolyline.add(path);
+        		mapView.getOverlays().add(path);
+        		
         	}            
         }
         catch (JSONException je)
@@ -341,6 +349,10 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 			for (Overlay path : directionsPolyline)
 				mapOverlays.remove(path);
 			directionsPolyline.clear();
+			
+			// Create origin marker
+			campusBuildingsOverlay.addOverlay(new OverlayItem(me.getMyLocation(), "Origin", "You are here"), getResources().getDrawable(R.drawable.me_resized));
+			campusBuildingsOverlay.commit();
 			
 			// Build HTTP request for Google Directions
 			String request = buildHTTPRequest(origin, destination, true);
