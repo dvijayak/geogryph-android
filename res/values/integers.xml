@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <integer name="places_textsearch_radius">1000</integer>
     <integer-array name="buildings_lat">
         <item >43533294</item>
         <item >43529492</item>

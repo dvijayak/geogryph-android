@@ -14,7 +14,7 @@ import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.OverlayItem;
 
-public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem> implements Centerable
+public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 {
 	private Map<String, OverlayItem> overlays = new HashMap<String, OverlayItem>();
 	private Context context;
@@ -87,6 +87,7 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem> implements 
 	{
 		overlays.clear();		
 		populate();
+		mapView.invalidate();
 	}
 	
 	// Populate only when all insertions/deletions in a batch have been performed 
@@ -95,7 +96,6 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem> implements 
 		populate();
 	}
 
-	@Override
 	public void snapToMarker(OverlayItem overlay) 
 	{
 		GeoPoint currentCenter = mapView.getMapCenter();
@@ -108,13 +108,8 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem> implements 
 		editor.commit(); // Do not forget to commit the edits!
 		
 		// If already centered, pop up dialog
-		if (currentCenter.equals(newCenter))
-		{
-			AlertDialog.Builder dialog = new AlertDialog.Builder(context);
-			dialog.setTitle(overlay.getTitle());
-			dialog.setMessage(overlay.getSnippet());
-			dialog.show();
-		}
+		if (currentCenter.equals(newCenter))		
+			Main.produceAlertDialog(context, overlay.getTitle(), overlay.getSnippet());					
 		// else, center on the marker
 		else
 			mapController.animateTo(newCenter); // Pans smoothly to the point and sets it as the map center

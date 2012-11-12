@@ -34,7 +34,6 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	private MyLocationOverlay me;
 	private static MapView mapView;
 	private GeoItemizedOverlay markersOverlay;
-//	private GeoItemizedOverlay destinationOverlay;
 	private List<Overlay> directionsPolyline;
 	private static MapController mapController;
 	private final int minZoom = 12;
@@ -122,6 +121,14 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		me.disableMyLocation();
 	}
 	
+	protected static void produceAlertDialog(Context context, String title, String message)
+	{
+		AlertDialog.Builder dialog = new AlertDialog.Builder(context);
+		dialog.setTitle(title);
+		dialog.setMessage(message);
+		dialog.show();
+	}
+	
     @TargetApi(14)
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -131,6 +138,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	    return true;
 	}	
 
+    // Scroll to the user's current location upon successfully receiving a valid fix
 	@Override
 	public void run() 
 	{
@@ -172,18 +180,14 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 			storageEditor.putInt("lon", currentLocation.getLongitudeE6());
 			storageEditor.commit();
 			
-			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-			dialog.setTitle("Saved");
-			dialog.setMessage("Your current location has been saved!");
-			dialog.show();
+			produceAlertDialog(this, "Saved", "Your current location has been saved");			
 			return true;
 		case R.id.menu_clear:
 			markersOverlay.clear();			
 			List<Overlay> mapOverlays = mapView.getOverlays();
 			for (Overlay path : directionsPolyline)
 				mapOverlays.remove(path);			
-			directionsPolyline.clear();
-			mapView.invalidate();
+			directionsPolyline.clear();			
 			return true;
 		case R.id.menu_about:
 			new AboutDialogFragment().show(this.getFragmentManager(), "tag_about");
@@ -200,21 +204,39 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		markersOverlay.commit();
 	}			
 	
-	// Construct a valid HTTP request for using the Directions REST Web Service
+	// Construct a valid HTTP request for using the Directions REST API
 	private String buildHTTPRequest (GeoPoint origin, GeoPoint destination, boolean sensor)
 	{
-		String request = "http://maps.googleapis.com/maps/api/directions/";
-		request += "json?"; // Output format (json or xml)
+		String request = getResources().getString(R.string.maps_domain) + "directions/";
+		request += getResources().getString(R.string.maps_output); // Output format (json or xml)
 		request += "mode=walking"; // Mode
 		
 		double latOrigin = origin.getLatitudeE6() / 1e6;
 		double lonOrigin = origin.getLongitudeE6() / 1e6;
 		double latDestination = destination.getLatitudeE6() / 1e6;
-		double lonDestination = destination.getLongitudeE6() / 1e6;
-		
+		double lonDestination = destination.getLongitudeE6() / 1e6;		
 		request += "&origin=" + latOrigin + "," + lonOrigin + "&destination=" + latDestination + "," + lonDestination;
 		
 		request += "&sensor=" + sensor;	
+		
+		return request;
+	}
+	
+	// Construct a valid HTTP request for using the Places REST API
+	private String buildHTTPRequest (GeoPoint location, String query, boolean sensor)
+	{
+		String request = getResources().getString(R.string.maps_domain) + "place/textsearch/";
+		request += getResources().getString(R.string.maps_output);
+		request += "query=" + query;
+		
+		double lat = location.getLatitudeE6() / 1e6;
+		double lon = location.getLongitudeE6() / 1e6;
+		request += "&location=" + lat + "," + lon;
+		request += "&radius=" + getResources().getInteger(R.integer.places_textsearch_radius);
+		
+		request += "&sensor=" + sensor;
+		request += "&key=" + getResources().getString(R.string.maps_api_key);
+		
 		return request;
 	}
 	
@@ -230,7 +252,8 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	}
 	
 	// Decode the overview_polyline object into an ordered list of GeoPoints (used for smoothing paths)
-	// Code obtained November 9th 2012 2:54 AM from http://jeffreysambells.com/2010/05/27/decoding-polylines-from-google-maps-direction-api-with-java
+	// (Follows the polyline encoding algorithm provided by Google at https://developers.google.com/maps/documentation/utilities/polylinealgorithm) 
+	// The code for this method was obtained November 9th 2012 2:54 AM from http://jeffreysambells.com/2010/05/27/decoding-polylines-from-google-maps-direction-api-with-java
 	private List<GeoPoint> decodePolyline(String encoded) 
 	{
 		List<GeoPoint> smoothPath = new ArrayList<GeoPoint>();
@@ -357,19 +380,16 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	        	new AsynchronousHTTP(mapView, this).execute(request);	// execute Request in background task        
 	        else
 	        {
-				AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-				dialog.setTitle("Error!");
-				dialog.setMessage("You are not connected to the Internet!");
-				dialog.show();
+	        	produceAlertDialog(this, "Error!", "You are not connected to the Internet!");				
 	        }   						
 		}
-		else
-		{
-			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-			dialog.setTitle("Nothing Saved");
-			dialog.setMessage("You have not saved a location saved yet!");
-			dialog.show();
-		}			
+		else		
+			produceAlertDialog(this, "Nothing Saved", "You have not saved a location yet!");						
+	}
+	
+	private void searchPlaces (GeoPoint boundingCircle)
+	{
+		
 	}
 	
 	@Override
