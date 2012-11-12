@@ -2,66 +2,77 @@ package ca.uoguelph.cmer.geogryph;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.android.maps.MapView;
 
-public class AsynchronousHTTP extends AsyncTask<String, Void, String> 
-{
-	
-	protected String result; // Query output
-	
+public class AsynchronousHTTP extends AsyncTask<String, Void, AsynchronousHTTP.Payload> 
+{			
 	private final WeakReference<MapView> mapViewReference;
 	private final WeakReference<Context> mainActivityReference;
 	
+	private enum DataType {STRING, BITMAP}		
+	
 	public static interface Contract
 	{
-		public void parseJSONResponse(String result);
+		public void parseJSONResponse (String result);
+		public void getMarkerBitmap (Bitmap bitmap);
 	}
 	
 	public AsynchronousHTTP (MapView mapView, Context context)
 	{
-		this.mapViewReference = new WeakReference<MapView>(mapView);
-		this.mainActivityReference = new WeakReference<Context>(context);
+		mapViewReference = new WeakReference<MapView>(mapView);
+		mainActivityReference = new WeakReference<Context>(context);
+		response = new Object();
 	}
 	
 	// Actual download method; run in the background task thread
 	@Override	
-	protected String doInBackground(String... urls) 
-	{			
+	protected AsynchronousHTTP.Payload doInBackground(String... urls) 
+	{					
 		return queryHTTPServer(urls[0]); // The first url is the actual (and only url)
 	}
 
 	@Override
-	protected void onPostExecute (String result)
-	{
-		if (isCancelled())
-		{
-			result = null;
+	protected void onPostExecute (AsynchronousHTTP.Payload output)
+	{							
+		if (!isCancelled())
+		{			
+			if (mapViewReference != null)
+			{
+				MapView mapView = mapViewReference.get();
+				if (mapView != null)
+				{					
+					switch (output.taskType)
+					{
+						case STRING:
+							if (output.getClass().equals("String".getClass()))
+							{							
+								String result = output.toString();
+								Log.v("Asynchro", result);
+								Context context = mainActivityReference.get();
+								Contract contract = (Contract) context;
+								contract.parseJSONResponse(result);	
+							}	
+					}				
+				}
+						
+			}
 		}
 		
-		if (mapViewReference != null)
-		{
-			MapView mapView = mapViewReference.get();
-			if (mapView != null)
-			{
-				Log.v("Asynchro", result);
-				Context context = mainActivityReference.get();
-				Contract contract = (Contract) context;
-				contract.parseJSONResponse(result);								
-			}
-					
-		}
+
 	}
 
-	private String queryHTTPServer (String urlString)
+	private Object queryHTTPServer (String urlString)
 	{					
 		try
 		{
@@ -69,9 +80,10 @@ public class AsynchronousHTTP extends AsyncTask<String, Void, String>
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
 			
 			// Read the stream
-			BufferedReader br = null;			
+			BufferedReader br = null; 
+			InputStream is = null;			
 			try
-			{
+			{				
 				br = new BufferedReader(new InputStreamReader(con.getInputStream()));
 				String line = "";
 				StringBuilder result = new StringBuilder();	// StringBuilder.append performs much better than concatenating Strings			
@@ -79,7 +91,7 @@ public class AsynchronousHTTP extends AsyncTask<String, Void, String>
 					result.append(line); // Concatenate all input strings into one line									
 				return result.toString();
 			}
-			catch (IOException ioe)
+			catch (Exception ioe)
 			{
 				ioe.printStackTrace();
 			}
@@ -96,6 +108,18 @@ public class AsynchronousHTTP extends AsyncTask<String, Void, String>
 						ioe.printStackTrace();
 					}
 				}
+				
+				if (is != null)
+				{
+					try
+					{
+						is.close();						
+					}
+					catch (IOException ioe)
+					{
+						ioe.printStackTrace();
+					}
+				}
 			}
 		}
 		catch (Exception e)
@@ -104,4 +128,17 @@ public class AsynchronousHTTP extends AsyncTask<String, Void, String>
 		}		
 		return null;
 	}
+	
+    public static class Payload
+    {
+        public DataType taskType;
+        public Object[] data;
+        public Object result;
+        public Exception exception;
+
+        public Payload(DataType taskType, Object[] data) {
+            this.taskType = taskType;
+            this.data = data;
+        }
+    }
 }

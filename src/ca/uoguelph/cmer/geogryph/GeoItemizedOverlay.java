@@ -5,12 +5,15 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
@@ -60,6 +63,23 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 		Bitmap bitmap = null;
 		try
 		{
+	            
+	        // Check if the device has access to the Internet	        			        	
+			ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+			NetworkInfo ni = cm.getActiveNetworkInfo();
+					
+			if (ni != null && ni.isConnected())
+			{
+				// Set up asynchronous http client and fire request
+	        	new AsynchronousHTTP(mapView, context).execute(iconURL);	// execute Request in background task
+			}			    			      
+	        else
+	        {
+	    		AlertDialog.Builder dialog = new AlertDialog.Builder(context);
+	    		dialog.setTitle("Error!");
+	    		dialog.setMessage("You are not connected to the Internet!");
+	    		dialog.show();				
+	        } 
 			bitmap = BitmapFactory.decodeStream((InputStream) new URL(iconURL).getContent());
 		}
 		catch (Exception e)
