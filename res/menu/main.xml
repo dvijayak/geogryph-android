@@ -30,11 +30,11 @@
 		    <item android:id="@+id/menu_clear"         
 		        android:title="@string/menu_clear" 
 		        android:icon="@drawable/remove" 
+		        android:showAsAction="ifRoom" />
+		    <item android:id="@+id/menu_about"         
+		        android:title="@string/menu_about" 
+		        android:icon="@drawable/about" 
 		        android:showAsAction="ifRoom" />               
 	    </menu>
-	</item>        
-    <item android:id="@+id/menu_about"         
-        android:title="@string/menu_about" 
-        android:icon="@drawable/about" 
-        android:showAsAction="never" />
+	</item>            
 </menu>

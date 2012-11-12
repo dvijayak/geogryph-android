@@ -12,18 +12,14 @@ import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 
 public class GeoMyLocationOverlay extends MyLocationOverlay {
-
-	private final Context context;
-	private final MapView mapView;
+	
     private Drawable marker;       
     private Point point = new Point();
     private Rect rect = new Rect();
 	
 	public GeoMyLocationOverlay(Context context, MapView mapView) 
 	{
-		super(context, mapView);
-		this.context = context;
-		this.mapView = mapView;
+		super(context, mapView);		
 		marker = context.getResources().getDrawable((R.drawable.me_resized));
 		point = new Point();
 		rect = new Rect();

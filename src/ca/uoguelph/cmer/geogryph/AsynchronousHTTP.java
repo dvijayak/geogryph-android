@@ -9,6 +9,7 @@ import java.net.URL;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.google.android.maps.MapView;
 
@@ -51,10 +52,10 @@ public class AsynchronousHTTP extends AsyncTask<String, Void, String>
 			MapView mapView = mapViewReference.get();
 			if (mapView != null)
 			{
-//				Log.v("Asynchro", result);
+				Log.v("Asynchro", result);
 				Context context = mainActivityReference.get();
 				Contract contract = (Contract) context;
-				contract.parseJSONResponse(result);				
+				contract.parseJSONResponse(result);								
 			}
 					
 		}

@@ -11,14 +11,17 @@ import org.json.JSONObject;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.app.SearchManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.SearchView;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
@@ -28,7 +31,7 @@ import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 
-public class Main extends MapActivity implements CampusBuildingsDialogFragment.Contract, AsynchronousHTTP.Contract, SharedPreferences, Runnable
+public class Main extends MapActivity implements CampusBuildingsDialogFragment.Contract, AsynchronousHTTP.Contract, SharedPreferences, Runnable, SearchView.OnQueryTextListener
 {
 	// Map objects & parameters
 	private MyLocationOverlay me;
@@ -51,6 +54,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	private CampusBuildingsDialogFragment buildingsDialog; // Dialog for displaying list
 	
 	// Other objects	
+	private SearchView searchView;
 	protected static GeoPoint savedLocation;
 	protected static SharedPreferences persistentPrimitives;
 	
@@ -99,13 +103,86 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         
         // Other objects
         persistentPrimitives = getPreferences(MODE_PRIVATE); // used to store and read saved location
+        
+        // Searchable: get the intent, verify the action and get the query        
+        Intent intent = getIntent();
+        if (Intent.ACTION_SEARCH.equals(intent.getAction()))
+        {        	
+        	String query = intent.getStringExtra(SearchManager.QUERY);
+        	searchPlaces(query, campus_center);
+        }
     }
-
+	
+    @TargetApi(14)
 	@Override
-	protected boolean isRouteDisplayed() 
-	{ 
-		return false;
-	}
+	public boolean onCreateOptionsMenu(Menu menu) 
+    {    	    	    	
+	    getMenuInflater().inflate(R.menu.main, menu);
+	    getActionBar().setHomeButtonEnabled(true); // Ensures that the app icon is clickable
+	    
+	    // Obtain a reference to the search action view				
+		searchView = (SearchView) menu.findItem(R.id.menu_search).getActionView();
+		
+		// Set the searchable configuration
+		SearchManager sm = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+		searchView.setSearchableInfo(sm.getSearchableInfo(getComponentName()));
+		
+	    return super.onCreateOptionsMenu(menu);
+	}	
+    
+	@Override
+	public boolean onOptionsItemSelected (MenuItem item)
+	{
+		switch (item.getItemId())
+		{
+			case android.R.id.home:
+				// App icon in action bar clicked; go to user's current location				
+				try
+				{
+					mapController.animateTo(me.getMyLocation());				
+				}
+				catch (java.lang.NullPointerException e)
+				{
+					mapController.animateTo(stone_gordon);
+				}
+				return true;
+			case R.id.menu_list:
+				buildingsDialog.show(this.getFragmentManager(), "tag_buildings");
+				return true;
+//			case R.id.menu_search:			
+//				onQueryTextSubmit(searchView.getQuery().toString());
+//				return true;
+			case R.id.menu_plot:						
+				int lat = persistentPrimitives.getInt("lat", stone_gordon.getLatitudeE6());
+				int lon = persistentPrimitives.getInt("lon", stone_gordon.getLongitudeE6());
+				GeoPoint destination = new GeoPoint(lat, lon);			
+				plotDirections(me.getMyLocation(), destination);
+				return true;
+			case R.id.menu_save:
+				// Create an object for storing persistent key-value pairs of primitive data types			
+				Editor storageEditor = persistentPrimitives.edit();
+				
+				// Write to persistent storage			
+				GeoPoint currentLocation = me.getMyLocation();
+				storageEditor.putInt("lat", currentLocation.getLatitudeE6());
+				storageEditor.putInt("lon", currentLocation.getLongitudeE6());
+				storageEditor.commit();
+				
+				produceAlertDialog(this, "Saved", "Your current location has been saved");			
+				return true;
+			case R.id.menu_clear:
+				markersOverlay.clear();			
+				List<Overlay> mapOverlays = mapView.getOverlays();
+				for (Overlay path : directionsPolyline)
+					mapOverlays.remove(path);			
+				directionsPolyline.clear();			
+				return true;
+			case R.id.menu_about:
+				new AboutDialogFragment().show(this.getFragmentManager(), "tag_about");
+			default:
+				return super.onOptionsItemSelected(item);
+		}
+	}	
 		
 	@Override
 	public void onResume ()
@@ -128,73 +205,13 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		dialog.setMessage(message);
 		dialog.show();
 	}
-	
-    @TargetApi(14)
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-	    MenuInflater inflater = getMenuInflater();
-	    inflater.inflate(R.menu.main, menu);
-	    this.getActionBar().setHomeButtonEnabled(true); // Ensures that the app icon is clickable	    
-	    return true;
-	}	
 
     // Scroll to the user's current location upon successfully receiving a valid fix
 	@Override
 	public void run() 
 	{
 		mapController.animateTo(me.getMyLocation());
-	}
-    
-	@Override
-	public boolean onOptionsItemSelected (MenuItem item)
-	{
-		switch (item.getItemId())
-		{
-		case android.R.id.home:
-			// App icon in action bar clicked; go to user's current location				
-			try
-			{
-				mapController.animateTo(me.getMyLocation());				
-			}
-			catch (java.lang.NullPointerException e)
-			{
-				mapController.animateTo(stone_gordon);
-			}
-			return true;
-		case R.id.menu_list:
-			buildingsDialog.show(this.getFragmentManager(), "tag_buildings");
-			return true;
-		case R.id.menu_plot:						
-			int lat = persistentPrimitives.getInt("lat", stone_gordon.getLatitudeE6());
-			int lon = persistentPrimitives.getInt("lon", stone_gordon.getLongitudeE6());
-			GeoPoint destination = new GeoPoint(lat, lon);			
-			plotDirections(me.getMyLocation(), destination);
-			return true;
-		case R.id.menu_save:
-			// Create an object for storing persistent key-value pairs of primitive data types			
-			Editor storageEditor = persistentPrimitives.edit();
-			
-			// Write to persistent storage			
-			GeoPoint currentLocation = me.getMyLocation();
-			storageEditor.putInt("lat", currentLocation.getLatitudeE6());
-			storageEditor.putInt("lon", currentLocation.getLongitudeE6());
-			storageEditor.commit();
-			
-			produceAlertDialog(this, "Saved", "Your current location has been saved");			
-			return true;
-		case R.id.menu_clear:
-			markersOverlay.clear();			
-			List<Overlay> mapOverlays = mapView.getOverlays();
-			for (Overlay path : directionsPolyline)
-				mapOverlays.remove(path);			
-			directionsPolyline.clear();			
-			return true;
-		case R.id.menu_about:
-			new AboutDialogFragment().show(this.getFragmentManager(), "tag_about");
-		default:
-			return super.onOptionsItemSelected(item);
-		}
-	}
+	}    
 
 	// Implements the contract defined by CampusBuildingsDialogFragment
 	@Override
@@ -223,10 +240,13 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	}
 	
 	// Construct a valid HTTP request for using the Places REST API
-	private String buildHTTPRequest (GeoPoint location, String query, boolean sensor)
+	private String buildHTTPRequest (String query, GeoPoint location, boolean sensor)
 	{
 		String request = getResources().getString(R.string.maps_domain) + "place/textsearch/";
 		request += getResources().getString(R.string.maps_output);
+		
+		// Replace white-space characters with "+"
+		query = query.replaceAll("\\s", "+");
 		request += "query=" + query;
 		
 		double lat = location.getLatitudeE6() / 1e6;
@@ -236,7 +256,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		
 		request += "&sensor=" + sensor;
 		request += "&key=" + getResources().getString(R.string.maps_api_key);
-		
+		Log.v("buildHTTPRequest", request);
 		return request;
 	}
 	
@@ -301,50 +321,63 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         try
         {        	
         	JSONObject response = new JSONObject(result);        	
-        	if (response.get("status").equals("OK"))
+        	if (response != null && response.get("status").equals("OK")) // We must always ensure that a certain key exists (by checking for null) in the JSON object
         	{        		
             	List<GeoPoint> pathPoints = new ArrayList<GeoPoint>();
         		JSONArray routes = response.getJSONArray("routes");
-        		for (int r = 0; r < routes.length(); r++)
+        		if (routes != null) 
         		{
-        			JSONObject route = routes.getJSONObject(r);
-        			JSONArray legs = route.getJSONArray("legs");
-        			for (int l = 0; l < legs.length(); l++)
-        			{
-        				JSONObject leg = legs.getJSONObject(l);
-        				JSONArray steps = leg.getJSONArray("steps");
-        				for (int s = 0; s < steps.length(); s++)
-        				{        					        					
-        					// Render each polyline/path (includes smoothed/curved paths)
-        					JSONObject step = steps.getJSONObject(s);        					        					      					        					         					        					
-        					JSONObject polyline = step.getJSONObject("polyline");        					
-        					List<GeoPoint> smoothedPath = decodePolyline(polyline.getString("points"));        					
-        					int length = smoothedPath.size();        					
-        					if (length > 1)
-        					{
-        						// Create a line between two points (i.e. a step; the atomic unit of a route)
-        						int point;
-        						for (point = 1; point < length; point++)
-        						{
-        							GeoPoint A = smoothedPath.get(point - 1), B = smoothedPath.get(point);
-        							pathPoints.add(A);
-        							pathPoints.add(B);
-        						}
-        						
-        						// Scroll to the last point (destination point)
-            					if (s == steps.length() - 1) 
-            					{
-            						// Create the destination marker and add it to the map
-            						GeoPoint destination = smoothedPath.get(point - 1);
-            						OverlayItem overlay = new OverlayItem(destination, "Destination", "You want to go here");			            						
-            						markersOverlay.addOverlay(overlay, getResources().getDrawable(R.drawable.blue_marker_resized));
-            						markersOverlay.commit();            						
-            						mapController.animateTo(destination);
-            					}
-        					}        					        					        						      					        					        					
-        				}
-        			}
+        			for (int r = 0; r < routes.length(); r++)
+            		{
+            			JSONObject route = routes.getJSONObject(r);
+            			JSONArray legs = route.getJSONArray("legs");
+            			if (legs != null)
+            			{
+            				for (int l = 0; l < legs.length(); l++)
+                			{
+                				JSONObject leg = legs.getJSONObject(l);
+                				JSONArray steps = leg.getJSONArray("steps");
+                				if (steps != null)
+                				{
+                					for (int s = 0; s < steps.length(); s++)
+                    				{        					        					
+                    					// Render each polyline/path (includes smoothed/curved paths)
+                    					JSONObject step = steps.getJSONObject(s);        					        					      					        					         					        					
+                    					JSONObject polyline = step.getJSONObject("polyline");     
+                    					if (polyline != null)
+                    					{
+                    						List<GeoPoint> smoothedPath = decodePolyline(polyline.getString("points"));        					
+                        					int length = smoothedPath.size();        					
+                        					if (length > 1)
+                        					{
+                        						// Create a line between two points (i.e. a step; the atomic unit of a route)
+                        						int point;
+                        						for (point = 1; point < length; point++)
+                        						{
+                        							GeoPoint A = smoothedPath.get(point - 1), B = smoothedPath.get(point);
+                        							pathPoints.add(A);
+                        							pathPoints.add(B);
+                        						}
+                        						
+                        						// Scroll to the last point (destination point)
+                            					if (s == steps.length() - 1) 
+                            					{
+                            						// Create the destination marker and add it to the map
+                            						GeoPoint destination = smoothedPath.get(point - 1);
+                            						OverlayItem overlay = new OverlayItem(destination, "Destination", "You want to go here");			            						
+                            						markersOverlay.addOverlay(overlay, getResources().getDrawable(R.drawable.blue_marker_resized));
+                            						markersOverlay.commit();            						
+                            						mapController.animateTo(destination);
+                            					}
+                        					} 
+                    					}                    					       					        					        						      					        					        					
+                    				}
+                				}                				
+                			}
+            			}            			
+            		}
         		}
+        		
         		// Render the complete route polyline
         		Overlay path = new PathOverlay(pathPoints.toArray(new GeoPoint[pathPoints.size()]), mapView);
         		directionsPolyline.add(path);
@@ -375,7 +408,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 			// Build HTTP request for Google Directions
 			String request = buildHTTPRequest(origin, destination, true);
 			
-	        // Set up asynchronous http client     
+	        // Set up asynchronous http client and fire request    
 	        if (isNetworkAvailable())        
 	        	new AsynchronousHTTP(mapView, this).execute(request);	// execute Request in background task        
 	        else
@@ -386,10 +419,40 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		else		
 			produceAlertDialog(this, "Nothing Saved", "You have not saved a location yet!");						
 	}
+
+	@Override
+	public boolean onQueryTextSubmit(String query) {		
+		// Search for a Point of Interest	
+		return searchPlaces (query, campus_center);
+	}	
 	
-	private void searchPlaces (GeoPoint boundingCircle)
-	{
+	private boolean searchPlaces (String query, GeoPoint boundingCircleCenter)
+	{	
+		// Build HTTP request for Google Places
+		String request = buildHTTPRequest(query, boundingCircleCenter, true);
 		
+		// Set up asynchronous http client and fire request
+		if (isNetworkAvailable())
+			new AsynchronousHTTP(mapView, this).execute(request);
+		else
+		{
+			produceAlertDialog(this, "Error!", "You are not connected to the Internet!");
+			return false;
+		}
+		
+		return true;
+	}	
+	
+	@Override
+	public boolean onQueryTextChange(String arg0) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+	@Override
+	protected boolean isRouteDisplayed() 
+	{ 
+		return false;
 	}
 	
 	@Override
