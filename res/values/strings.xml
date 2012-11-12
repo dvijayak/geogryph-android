@@ -1,6 +1,7 @@
 <resources>
 
     <string name="app_name">GeoGryph</string>
+    <string name="app_name_search">GeoGryph: Search points of interest</string>
     <string name="title_activity_main">Main</string>    
     <string name="menu_search">Search</string>
     <string name="menu_plot">Plot</string>

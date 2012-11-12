@@ -1,11 +1,15 @@
 package ca.uoguelph.cmer.geogryph;
 
+import java.io.InputStream;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
 import com.google.android.maps.GeoPoint;
@@ -43,10 +47,33 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 	{		
 		// Assign an alternate marker if provided; else the default is used
 		if (marker != null)
-			overlay.setMarker(boundCenterBottom(marker));
+			overlay.setMarker(boundCenterBottom(marker));		
+		else
+			overlay.setMarker(null);
 		overlays.put(getKey(overlay), overlay);		
 		snapToMarker(overlay);
 	}	
+	
+	public void addPOIOverlay (OverlayItem overlay, String iconURL, String key)
+	{		
+			
+		Bitmap bitmap = null;
+		try
+		{
+			bitmap = BitmapFactory.decodeStream((InputStream) new URL(iconURL).getContent());
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+				
+		if (bitmap != null)
+			overlay.setMarker(boundCenterBottom(new BitmapDrawable(bitmap)));
+		else
+			overlay.setMarker(null);
+		overlays.put(key, overlay);
+		snapToMarker(overlay);
+	}
 	
 	public boolean containsOverlay (OverlayItem overlay)
 	{		
@@ -96,7 +123,7 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 		populate();
 	}
 
-	public void snapToMarker(OverlayItem overlay) 
+	private void snapToMarker (OverlayItem overlay) 
 	{
 		GeoPoint currentCenter = mapView.getMapCenter();
 		GeoPoint newCenter = overlay.getPoint();
@@ -113,5 +140,5 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 		// else, center on the marker
 		else
 			mapController.animateTo(newCenter); // Pans smoothly to the point and sets it as the map center
-	}
+	}		
 }

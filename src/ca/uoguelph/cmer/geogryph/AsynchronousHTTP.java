@@ -16,7 +16,7 @@ import com.google.android.maps.MapView;
 public class AsynchronousHTTP extends AsyncTask<String, Void, String> 
 {
 	
-	protected String result;
+	protected String result; // Query output
 	
 	private final WeakReference<MapView> mapViewReference;
 	private final WeakReference<Context> mainActivityReference;
