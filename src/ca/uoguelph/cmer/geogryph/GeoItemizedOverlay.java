@@ -1,19 +1,11 @@
 package ca.uoguelph.cmer.geogryph;
 
-import java.io.InputStream;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
@@ -50,9 +42,7 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 	{		
 		// Assign an alternate marker if provided; else the default is used
 		if (marker != null)
-			overlay.setMarker(boundCenterBottom(marker));		
-		else
-			overlay.setMarker(null);
+			overlay.setMarker(boundCenterBottom(marker));				
 		overlays.put(getKey(overlay), overlay);
 		
 		// Restrict the map zoom level to the specified minimum/desired zoom level
@@ -63,47 +53,36 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 		snapToMarker(overlay);
 	}	
 	
-	public void addPOIOverlay (OverlayItem overlay, String iconURL, String key)
-	{		
-			
-		Bitmap bitmap = null;
-		try
-		{
-	            
-	        // Check if the device has access to the Internet	        			        	
-			ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-			NetworkInfo ni = cm.getActiveNetworkInfo();
-					
-			if (ni != null && ni.isConnected())
-			{
-				// Set up asynchronous http client and fire request
-	        	new AsynchronousHTTP(mapView, context).execute(iconURL);	// execute Request in background task
-			}			    			      
-	        else
-	        {
-	    		AlertDialog.Builder dialog = new AlertDialog.Builder(context);
-	    		dialog.setTitle("Error!");
-	    		dialog.setMessage("You are not connected to the Internet!");
-	    		dialog.show();				
-	        } 
-			bitmap = BitmapFactory.decodeStream((InputStream) new URL(iconURL).getContent());
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-				
-		if (bitmap != null)
-			overlay.setMarker(boundCenterBottom(new BitmapDrawable(bitmap)));
-		else
-			overlay.setMarker(null);
+	public void addPOIOverlay (OverlayItem overlay, Drawable marker, String key)
+	{										
+		// Assign an alternate marker if provided; else the default is used
+		if (marker != null)
+			overlay.setMarker(boundCenterBottom(marker));				
 		overlays.put(key, overlay);
 		snapToMarker(overlay);
+	}
+	
+	public void changeOverlayMarker (String key, Drawable marker)
+	{
+		if (containsOverlay(key))
+		{
+			OverlayItem overlay = overlays.get(key);
+			if (marker != null)
+				overlay.setMarker(boundCenterBottom(marker));
+			else
+				overlay.setMarker(null);
+			mapView.invalidate();
+		}
 	}
 	
 	public boolean containsOverlay (OverlayItem overlay)
 	{		
 		return (overlay != null) ? overlays.containsKey(getKey(overlay)) : null;
+	}
+	
+	public boolean containsOverlay(String key)
+	{
+		return (key != null) ? overlays.containsKey(key) : null;
 	}
 	
 	public void removeOverlay (OverlayItem overlay)

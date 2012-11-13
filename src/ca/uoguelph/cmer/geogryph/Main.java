@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.SearchView;
+import android.widget.SearchView.OnQueryTextListener;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
@@ -31,7 +32,7 @@ import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 
-public class Main extends MapActivity implements CampusBuildingsDialogFragment.Contract, AsynchronousHTTP.Contract, SharedPreferences, Runnable//, OnLongClickListener, OnTouchListener
+public class Main extends MapActivity implements CampusBuildingsDialogFragment.Contract, AsynchronousHTTP.Contract, SharedPreferences, Runnable //, OnLongClickListener, OnTouchListener
 {
 	// UI objects
 	private SearchView searchView;
@@ -41,7 +42,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	// Map objects & parameters
 	private MyLocationOverlay me;
 	private static MapView mapView;
-	private GeoItemizedOverlay markersOverlay;
+	protected GeoItemizedOverlay markersOverlay;
 	private List<Overlay> directionsPolyline;
 	private static MapController mapController;
 	protected static final int minZoom = 14;
@@ -142,7 +143,27 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		// Set the searchable configuration
 		SearchManager sm = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
 		searchView.setSearchableInfo(sm.getSearchableInfo(getComponentName()));
-		
+		searchView.setOnQueryTextListener(new OnQueryTextListener()
+			{
+				@Override
+				public boolean onQueryTextSubmit(String query) {
+					Log.v("Query", "Query: " + query);
+					if (query.equalsIgnoreCase("any") || query.equalsIgnoreCase("all") || query.equalsIgnoreCase("anything"))
+					{
+						searchPlaces(null, campus_center);
+						return true;
+					}
+					else
+						return false;
+				}
+				
+				// Perform default behaviour
+				@Override
+				public boolean onQueryTextChange(String newText) {
+					return false;
+				}				
+			}
+		);				
 	    return super.onCreateOptionsMenu(menu);
 	}	
     
@@ -303,12 +324,17 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	// Construct a valid HTTP request for using the Places REST API
 	private String buildHTTPRequest (String query, GeoPoint location, boolean sensor)
 	{
-		String request = getResources().getString(R.string.maps_domain) + "place/textsearch/";
+		String request = getResources().getString(R.string.maps_domain) + "place/nearbysearch/";
 		request += getResources().getString(R.string.maps_output);
 		
 		// Replace white-space characters with "+"
-		query = query.replaceAll("\\s", "+");
-		request += "query=" + query;
+		// Adds a specific keyword search parameter if and only if provided
+//		if (!query.equalsIgnoreCase("any") && !query.equalsIgnoreCase("all") && !query.equalsIgnoreCase("anything"))
+		if (query != null)
+		{
+			query = query.replaceAll("\\s", "+");
+			request += "keyword=" + query;						
+		}		
 		
 		double lat = location.getLatitudeE6() / 1e6;
 		double lon = location.getLongitudeE6() / 1e6;
@@ -320,6 +346,8 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		Log.v("buildHTTPRequest", request);
 		return request;
 	}
+	
+	// 
 	
 	// Check if the device has access to the Internet
 	private boolean isNetworkAvailable ()
@@ -373,7 +401,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 			smoothPath.add(point);
 		}
 		return smoothPath;
-	}	
+	}		
 	
 	@Override
 	public void parseJSONResponse (String queryResult)
@@ -498,24 +526,56 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
             					if (result.has("icon"))
             						iconURL = result.getString("icon");
             					if (result.has("types"))
-            						type = "Type: " + result.getString("types");
+            					{
+            						type = "Type: ";
+            						JSONArray types = result.getJSONArray("types");
+            						int length = types.length();
+            						for (int t = 0; t < length; t++)
+            						{
+            							type += types.getString(t);
+            							if (t != length - 1)
+            								type += ", ";            							
+            						}            							
+            					}
             					if (result.has("rating"))
             						rating = "Rating: " + result.getString("rating");
             					if (result.has("opening_hours"))
-            						hours = "Open Hours: " + result.getString("opening_hours");            					            					
+            					{
+            						JSONObject openHours = result.getJSONObject("opening_hours");
+            						if (openHours.has("open_now"))   
+            						{
+            							if (openHours.getBoolean("open_now"))
+            								hours = "(OPEN)";
+            							else
+            								hours = "(CLOSED)";
+            							name += " " + hours;
+            						}
+            					}            						            					            					
             					
-            					String[] properties = {address, type, rating, hours};        					
+            					
+            					String[] properties = {address, type, rating};        					
             					StringBuilder snippet = new StringBuilder();		        					
             					for (int i = 0; i < properties.length; i++) {		
             						if (properties[i] != null)			
             							snippet.append(properties[i] + "\n");            						
             					}
             					
-            					if (iconURL != null)
-            						Log.v("Places", "Icon URL: " + iconURL);
-            					
             					if (id != null)
-            						markersOverlay.addPOIOverlay(new OverlayItem(new GeoPoint(lat, lon), name, snippet.toString()), iconURL, id);        					
+            					{            						            					
+	            					if (iconURL != null)
+	            					{
+	            						String request = id + "|" + iconURL;
+	            						Log.v("Places Icon", "Request: " + request);
+	            						if (isNetworkAvailable())
+	            						{
+	            							new AsynchronousHTTP(mapView, this).execute(request);
+	            						}
+	            						else
+	            							produceAlertDialog(this, "Error!", "You are not connected to the Internet!");
+	            					}
+	            					            				
+	        						markersOverlay.addPOIOverlay(new OverlayItem(new GeoPoint(lat, lon), name, snippet.toString()), null, id);
+            					}
             				}
             				markersOverlay.commit();
         				}
@@ -552,10 +612,8 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	        // Set up asynchronous http client and fire request    
 	        if (isNetworkAvailable())        
 	        	new AsynchronousHTTP(mapView, this).execute(request);	// execute Request in background task        
-	        else
-	        {
-	        	produceAlertDialog(this, "Error!", "You are not connected to the Internet!");				
-	        }   						
+	        else	        
+	        	produceAlertDialog(this, "Error!", "You are not connected to the Internet!");					        			
 		}
 		else		
 			produceAlertDialog(this, "Nothing Saved", "You have not saved a location yet!");						
@@ -563,7 +621,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	
 	private boolean searchPlaces (String query, GeoPoint boundingCircleCenter)
 	{	
-		// Build HTTP request for Google Places
+		// Build HTTP request for Google Places		
 		String request = buildHTTPRequest(query, boundingCircleCenter, true);
 		
 		// Set up asynchronous http client and fire request
