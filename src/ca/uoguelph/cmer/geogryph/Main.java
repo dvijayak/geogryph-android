@@ -327,12 +327,10 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		String request = getResources().getString(R.string.maps_domain) + "place/nearbysearch/";
 		request += getResources().getString(R.string.maps_output);
 		
-		// Replace white-space characters with "+"
 		// Adds a specific keyword search parameter if and only if provided
-//		if (!query.equalsIgnoreCase("any") && !query.equalsIgnoreCase("all") && !query.equalsIgnoreCase("anything"))
 		if (query != null)
 		{
-			query = query.replaceAll("\\s", "+");
+			query = query.replaceAll("\\s", "+"); // Replace white-space characters with "+"
 			request += "keyword=" + query;						
 		}		
 		
