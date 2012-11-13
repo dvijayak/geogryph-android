@@ -30,7 +30,7 @@ public class CampusBuildingsDialogFragment extends DialogFragment {
 						contract.addOverlay(which);						
 					}
 				}
-		);
+		);		
 		return builder.create();
 	}		
 }

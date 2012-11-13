@@ -53,7 +53,13 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 			overlay.setMarker(boundCenterBottom(marker));		
 		else
 			overlay.setMarker(null);
-		overlays.put(getKey(overlay), overlay);		
+		overlays.put(getKey(overlay), overlay);
+		
+		// Restrict the map zoom level to the specified minimum/desired zoom level
+		int currentZoom = mapView.getZoomLevel();
+		if (currentZoom < Main.desiredZoom)				
+			mapController.setZoom(Main.desiredZoom);
+		
 		snapToMarker(overlay);
 	}	
 	
@@ -159,6 +165,8 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 			Main.produceAlertDialog(context, overlay.getTitle(), overlay.getSnippet());					
 		// else, center on the marker
 		else
+		{
 			mapController.animateTo(newCenter); // Pans smoothly to the point and sets it as the map center
+		}
 	}		
 }

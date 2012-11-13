@@ -9,41 +9,48 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.view.View;
+import android.widget.ProgressBar;
 
 import com.google.android.maps.MapView;
 
-public class AsynchronousHTTP extends AsyncTask<String, Void, AsynchronousHTTP.Payload> 
+public class AsynchronousHTTP extends AsyncTask<String, Void, String> 
 {			
 	private final WeakReference<MapView> mapViewReference;
 	private final WeakReference<Context> mainActivityReference;
 	
-	private enum DataType {STRING, BITMAP}		
+	private ProgressBar progressBar;
 	
 	public static interface Contract
 	{
-		public void parseJSONResponse (String result);
-		public void getMarkerBitmap (Bitmap bitmap);
+		public void parseJSONResponse (String result);		
 	}
 	
 	public AsynchronousHTTP (MapView mapView, Context context)
 	{
 		mapViewReference = new WeakReference<MapView>(mapView);
 		mainActivityReference = new WeakReference<Context>(context);
-		response = new Object();
+		progressBar = (ProgressBar) ((Main) context).findViewById(R.id.progressbar);
+	}
+
+	@Override
+	protected void onPreExecute ()
+	{ 
+		Log.v("Async", "Pre-Execute");
+		progressBar.setVisibility(View.VISIBLE);
 	}
 	
 	// Actual download method; run in the background task thread
 	@Override	
-	protected AsynchronousHTTP.Payload doInBackground(String... urls) 
+	protected String doInBackground (String... urls) 
 	{					
 		return queryHTTPServer(urls[0]); // The first url is the actual (and only url)
 	}
 
 	@Override
-	protected void onPostExecute (AsynchronousHTTP.Payload output)
+	protected void onPostExecute (String output)
 	{							
 		if (!isCancelled())
 		{			
@@ -51,28 +58,19 @@ public class AsynchronousHTTP extends AsyncTask<String, Void, AsynchronousHTTP.P
 			{
 				MapView mapView = mapViewReference.get();
 				if (mapView != null)
-				{					
-					switch (output.taskType)
-					{
-						case STRING:
-							if (output.getClass().equals("String".getClass()))
-							{							
-								String result = output.toString();
-								Log.v("Asynchro", result);
-								Context context = mainActivityReference.get();
-								Contract contract = (Contract) context;
-								contract.parseJSONResponse(result);	
-							}	
-					}				
-				}
-						
+				{																					
+					String result = output.toString();
+//					Log.v("Asynchro", result);
+					Context context = mainActivityReference.get();
+					Contract contract = (Contract) context;
+					contract.parseJSONResponse(result);						
+				}						
 			}
 		}
-		
-
+		progressBar.setVisibility(View.INVISIBLE);		
 	}
 
-	private Object queryHTTPServer (String urlString)
+	private String queryHTTPServer (String urlString)
 	{					
 		try
 		{
@@ -127,18 +125,5 @@ public class AsynchronousHTTP extends AsyncTask<String, Void, AsynchronousHTTP.P
 			e.printStackTrace();
 		}		
 		return null;
-	}
-	
-    public static class Payload
-    {
-        public DataType taskType;
-        public Object[] data;
-        public Object result;
-        public Exception exception;
-
-        public Payload(DataType taskType, Object[] data) {
-            this.taskType = taskType;
-            this.data = data;
-        }
-    }
+	}	    
 }

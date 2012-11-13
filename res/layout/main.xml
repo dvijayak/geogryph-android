@@ -1,9 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.maps.MapView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/mapview"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:clickable="true"
-    android:apiKey="0j2ME1y-v6l_oDY98GEimllz7GYsk8pvUlSQQ7g"
-/>
+    android:layout_height="fill_parent" 
+    android:gravity="center_vertical" >
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent"	    
+	    android:orientation="vertical" >
+	        
+		<com.google.android.maps.MapView
+		    xmlns:android="http://schemas.android.com/apk/res/android"
+		    android:id="@+id/mapview"
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+		    android:clickable="true"
+		    android:apiKey="0j2ME1y-v6l_oDY98GEimllz7GYsk8pvUlSQQ7g"
+		    android:visibility="visible" />		
+	</LinearLayout>
+    
+    <ProgressBar
+        android:id="@+id/progressbar"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    style="@android:style/Widget.ProgressBar.Large"
+	    android:visibility="invisible" />    
+</FrameLayout>

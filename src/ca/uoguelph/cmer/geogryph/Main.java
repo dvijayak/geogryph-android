@@ -31,16 +31,21 @@ import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 
-public class Main extends MapActivity implements CampusBuildingsDialogFragment.Contract, AsynchronousHTTP.Contract, SharedPreferences, Runnable
+public class Main extends MapActivity implements CampusBuildingsDialogFragment.Contract, AsynchronousHTTP.Contract, SharedPreferences, Runnable//, OnLongClickListener, OnTouchListener
 {
+	// UI objects
+	private SearchView searchView;
+	/*private long startTime = 0;
+	private int screenX, screenY;*/	
+	
 	// Map objects & parameters
 	private MyLocationOverlay me;
 	private static MapView mapView;
 	private GeoItemizedOverlay markersOverlay;
 	private List<Overlay> directionsPolyline;
 	private static MapController mapController;
-	private final int minZoom = 12;
-	private final int desiredZoom = 18;
+	protected static final int minZoom = 14;
+	protected static final int desiredZoom = 19;
 	
 	// Directions
 	public String directionsResult;
@@ -53,8 +58,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	protected OverlayItem[] buildings;
 	private CampusBuildingsDialogFragment buildingsDialog; // Dialog for displaying list
 	
-	// Other objects	
-	private SearchView searchView;
+	// Other objects		
 	protected static GeoPoint savedLocation;
 	protected static SharedPreferences persistentPrimitives;
 	
@@ -63,13 +67,13 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);  
-        buildingsDialog = new CampusBuildingsDialogFragment();
+        buildingsDialog = new CampusBuildingsDialogFragment();        
         
         // Initializing the map        
         mapView = (MapView) findViewById(R.id.mapview);
         mapView.preLoad();
         mapView.setBuiltInZoomControls(true);
-        mapController = mapView.getController(); // Controller allows to set the map zoom and map center
+        mapController = mapView.getController(); // Controller allows to set the map zoom and map center        
          
         // Overlays and center map initially
         List<Overlay> mapOverlays = mapView.getOverlays();
@@ -147,55 +151,54 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	{
 		switch (item.getItemId())
 		{
-			case android.R.id.home:
-				// App icon in action bar clicked; go to user's current location				
-				try
-				{
-					mapController.animateTo(me.getMyLocation());				
-				}
-				catch (java.lang.NullPointerException e)
-				{
-					mapController.animateTo(stone_gordon);
-				}
-				return true;
-			case R.id.menu_list:
-				buildingsDialog.show(this.getFragmentManager(), "tag_buildings");
-				return true;
-//			case R.id.menu_search:			
-//				onQueryTextSubmit(searchView.getQuery().toString());
-//				return true;
-			case R.id.menu_plot:						
-				int lat = persistentPrimitives.getInt("lat", stone_gordon.getLatitudeE6());
-				int lon = persistentPrimitives.getInt("lon", stone_gordon.getLongitudeE6());
-				GeoPoint destination = new GeoPoint(lat, lon);			
-				plotDirections(me.getMyLocation(), destination);
-				return true;
-			case R.id.menu_save:
-				// Create an object for storing persistent key-value pairs of primitive data types			
-				Editor storageEditor = persistentPrimitives.edit();
-				
-				// Write to persistent storage			
-				GeoPoint currentLocation = me.getMyLocation();
-				storageEditor.putInt("lat", currentLocation.getLatitudeE6());
-				storageEditor.putInt("lon", currentLocation.getLongitudeE6());
-				storageEditor.commit();
-				
-				produceAlertDialog(this, "Saved", "Your current location has been saved");			
-				return true;
-			case R.id.menu_clear:
-				markersOverlay.clear();			
-				List<Overlay> mapOverlays = mapView.getOverlays();
-				for (Overlay path : directionsPolyline)
-					mapOverlays.remove(path);			
-				directionsPolyline.clear();			
-				return true;
-			case R.id.menu_about:
-				new AboutDialogFragment().show(this.getFragmentManager(), "tag_about");
-			default:
-				return super.onOptionsItemSelected(item);
+		case android.R.id.home:
+			// App icon in action bar clicked; go to user's current location				
+			try
+			{
+				mapController.animateTo(me.getMyLocation());				
+			}
+			catch (java.lang.NullPointerException e)
+			{
+				mapController.animateTo(stone_gordon);
+			}
+			return true;
+		case R.id.menu_list:
+			buildingsDialog.show(this.getFragmentManager(), "tag_buildings");
+			return true;
+		case R.id.menu_plot:						
+			int lat = persistentPrimitives.getInt("lat", stone_gordon.getLatitudeE6());
+			int lon = persistentPrimitives.getInt("lon", stone_gordon.getLongitudeE6());
+			GeoPoint destination = new GeoPoint(lat, lon);			
+			plotDirections(me.getMyLocation(), destination);
+			return true;
+		case R.id.menu_save:
+			// Create an object for storing persistent key-value pairs of primitive data types			
+			Editor storageEditor = persistentPrimitives.edit();
+			
+			// Write to persistent storage			
+			GeoPoint currentLocation = me.getMyLocation();
+			storageEditor.putInt("lat", currentLocation.getLatitudeE6());
+			storageEditor.putInt("lon", currentLocation.getLongitudeE6());
+			storageEditor.commit();
+			
+			produceAlertDialog(this, "Saved", "Your current location has been saved");			
+			return true;
+		case R.id.menu_clear:
+			markersOverlay.clear();			
+			List<Overlay> mapOverlays = mapView.getOverlays();
+			for (Overlay path : directionsPolyline)
+				mapOverlays.remove(path);			
+			directionsPolyline.clear();			
+			return true;
+		case R.id.menu_about:
+			new AboutDialogFragment().show(this.getFragmentManager(), "tag_about");
+		default:
+			return super.onOptionsItemSelected(item);
 		}
 	}	
-		
+	
+	// Ensures that location service updates pause/resume upon pausing/resuming the application
+	// (Tentative): might need to disable this feature to allow a smoother app-switching experience but at the cost of Internet usage
 	@Override
 	public void onResume ()
 	{
@@ -209,7 +212,53 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		super.onPause();
 		me.disableMyLocation();
 	}
+		
+	/*
+	 * Description: Mark a location on the map with a long-press gesture 
+	 * Leave commented - Unstable but working code. Can be completed in the future.
+	 * @Override
+	public boolean dispatchTouchEvent (MotionEvent event)
+	{
+		int threshold = 800; // In milliseconds		;
+		
+		int actionType = event.getAction();
+		
+		switch (actionType)
+		{
+		case MotionEvent.ACTION_DOWN:
+			startTime = event.getEventTime();
+			screenX = (int) event.getX();
+			screenY = (int) event.getY();
+		case MotionEvent.ACTION_MOVE:
+			
+		case MotionEvent.ACTION_UP:
+			long eventTime = event.getEventTime();
+			long downTime = event.getDownTime();
+			
+			if (startTime == downTime)
+			{
+				if ((eventTime - startTime) > threshold)
+				{
+					long totalTime = eventTime - startTime;
+					Log.v("LongPress", Long.toString(totalTime));
+					
+					// Convert screen pixels to a GeoPoint
+					Projection projection = mapView.getProjection();
+					GeoPoint location = projection.fromPixels(screenX, screenY);					
+					
+					// Create an overlay on this location and add to the map
+					// TODO USE GOOGLE GEOCODE SERVICE TO DISPLAY ADDRESS AND POSSIBLY NAME OF LOCATION
+					OverlayItem item = new OverlayItem(location, "Marked Location", location.getLatitudeE6()/1e6 + ", " + location.getLongitudeE6()/1e6);
+					markersOverlay.addOverlay(item, getResources().getDrawable(R.drawable.yellow_dot));
+					markersOverlay.commit();					
+				}
+			}
+		}
+		
+		return super.dispatchTouchEvent(event);
+	}*/	
 	
+	// General function for generating a standard info alert dialog
 	protected static void produceAlertDialog(Context context, String title, String message)
 	{
 		AlertDialog.Builder dialog = new AlertDialog.Builder(context);

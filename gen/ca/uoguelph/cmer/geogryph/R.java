@@ -40,17 +40,18 @@ public final class R {
         public static final int save=0x7f02000f;
         public static final int university=0x7f020010;
         public static final int university_resized=0x7f020011;
+        public static final int yellow_dot=0x7f020012;
     }
     public static final class id {
         public static final int mapview=0x7f0b0000;
         public static final int menu_about=0x7f0b0008;
-        public static final int menu_clear=0x7f0b0007;
-        public static final int menu_expand_util=0x7f0b0005;
-        public static final int menu_expland_mark=0x7f0b0001;
-        public static final int menu_list=0x7f0b0002;
-        public static final int menu_plot=0x7f0b0004;
-        public static final int menu_save=0x7f0b0006;
-        public static final int menu_search=0x7f0b0003;
+        public static final int menu_clear=0x7f0b0006;
+        public static final int menu_expland_mark=0x7f0b0002;
+        public static final int menu_list=0x7f0b0003;
+        public static final int menu_plot=0x7f0b0007;
+        public static final int menu_save=0x7f0b0005;
+        public static final int menu_search=0x7f0b0004;
+        public static final int progressbar=0x7f0b0001;
     }
     public static final class integer {
         public static final int places_textsearch_radius=0x7f070000;
