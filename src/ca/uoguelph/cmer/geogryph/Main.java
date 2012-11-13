@@ -511,6 +511,9 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
             							snippet.append(properties[i] + "\n");            						
             					}
             					
+            					if (iconURL != null)
+            						Log.v("Places", "Icon URL: " + iconURL);
+            					
             					if (id != null)
             						markersOverlay.addPOIOverlay(new OverlayItem(new GeoPoint(lat, lon), name, snippet.toString()), iconURL, id);        					
             				}

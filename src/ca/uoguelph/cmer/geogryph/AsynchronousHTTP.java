@@ -10,7 +10,6 @@ import java.net.URL;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 
@@ -37,57 +36,32 @@ public class AsynchronousHTTP extends AsyncTask<String, Void, String>
 
 	@Override
 	protected void onPreExecute ()
-	{ 
-		Log.v("Async", "Pre-Execute");
+	{ 		
 		progressBar.setVisibility(View.VISIBLE);
 	}
 	
-	// Actual download method; run in the background task thread
+	// Query the HTTP server and receive response; perform this in background
 	@Override	
 	protected String doInBackground (String... urls) 
-	{					
-		return queryHTTPServer(urls[0]); // The first url is the actual (and only url)
-	}
-
-	@Override
-	protected void onPostExecute (String output)
-	{							
-		if (!isCancelled())
-		{			
-			if (mapViewReference != null)
-			{
-				MapView mapView = mapViewReference.get();
-				if (mapView != null)
-				{																					
-					String result = output.toString();
-//					Log.v("Asynchro", result);
-					Context context = mainActivityReference.get();
-					Contract contract = (Contract) context;
-					contract.parseJSONResponse(result);						
-				}						
-			}
-		}
-		progressBar.setVisibility(View.INVISIBLE);		
-	}
-
-	private String queryHTTPServer (String urlString)
-	{					
+	{			
+		String output = null;
 		try
 		{
-			URL url = new URL(urlString);
+			URL url = new URL(urls[0]); // The first url is the actual (and only url)
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
 			
 			// Read the stream
 			BufferedReader br = null; 
-			InputStream is = null;			
+			InputStream is = null;						
 			try
 			{				
 				br = new BufferedReader(new InputStreamReader(con.getInputStream()));
 				String line = "";
 				StringBuilder result = new StringBuilder();	// StringBuilder.append performs much better than concatenating Strings			
 				while ((line = br.readLine()) != null)				
-					result.append(line); // Concatenate all input strings into one line									
-				return result.toString();
+					result.append(line); // Concatenate all input strings into one line								
+				
+				output = result.toString();
 			}
 			catch (Exception ioe)
 			{
@@ -124,6 +98,26 @@ public class AsynchronousHTTP extends AsyncTask<String, Void, String>
 		{
 			e.printStackTrace();
 		}		
-		return null;
-	}	    
+		return output;		
+	}
+
+	@Override
+	protected void onPostExecute (String output)
+	{							
+		if (!isCancelled())
+		{			
+			if (mapViewReference != null)
+			{
+				MapView mapView = mapViewReference.get();
+				if (mapView != null)
+				{																					
+					String result = output.toString();
+					Context context = mainActivityReference.get();
+					Contract contract = (Contract) context;
+					contract.parseJSONResponse(result);						
+				}						
+			}
+		}
+		progressBar.setVisibility(View.INVISIBLE);		
+	}
 }
