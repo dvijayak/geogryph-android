@@ -146,7 +146,6 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 		else
 		{
 			mapController.animateTo(newCenter); // Pans smoothly to the point and sets it as the map center
-			Main.produceAlertDialog(context, overlay.getTitle(), overlay.getSnippet());		
 		}
 	}		
 }
