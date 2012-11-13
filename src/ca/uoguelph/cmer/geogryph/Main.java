@@ -62,6 +62,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	// Other objects		
 	protected static GeoPoint savedLocation;
 	protected static SharedPreferences persistentPrimitives;
+	private String previousPlacesRequest;
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) 
@@ -322,9 +323,21 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	}
 	
 	// Construct a valid HTTP request for using the Places REST API
-	private String buildHTTPRequest (String query, GeoPoint location, boolean sensor)
+	private String buildHTTPRequest (String query, GeoPoint location, String nextPageToken, boolean sensor)
 	{
-		String request = getResources().getString(R.string.maps_domain) + "place/nearbysearch/";
+		String request = new String();
+		
+		// Handle the case of paginated results
+		// Resend the same query with the provided token to load the next page of results
+		if (nextPageToken != null)
+		{
+			request = previousPlacesRequest;
+			request += "&pagetoken=" + nextPageToken;
+			Log.v("buildHTTPRequest", request);
+			return request;
+		}		
+		
+		request += getResources().getString(R.string.maps_domain) + "place/nearbysearch/";
 		request += getResources().getString(R.string.maps_output);
 		
 		// Adds a specific keyword search parameter if and only if provided
@@ -342,6 +355,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		request += "&sensor=" + sensor;
 		request += "&key=" + getResources().getString(R.string.maps_api_key);
 		Log.v("buildHTTPRequest", request);
+		previousPlacesRequest = request;
 		return request;
 	}
 	
@@ -407,182 +421,211 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         // build JSON object
         try
         {        	
-        	JSONObject response = new JSONObject(queryResult);        	
-        	if (response.has("status") && response.getString("status").equals("OK"))
-        	{        		            	        	
-        		if (response.has("routes")) 
-        		{        			
-        			JSONArray routes = response.getJSONArray("routes");
-        			List<GeoPoint> pathPoints = new ArrayList<GeoPoint>();
-        			for (int r = 0; r < routes.length(); r++)
-            		{
-            			JSONObject route = routes.getJSONObject(r);            			
-            			if (route.has("legs"))
-            			{
-            				JSONArray legs = route.getJSONArray("legs");
-            				for (int l = 0; l < legs.length(); l++)
+        	JSONObject response = new JSONObject(queryResult);        
+        	if (response.has("status"))
+        	{
+        		// The request was successful - process the response
+        		if (response.getString("status").equals("OK"))
+            	{        		         
+        			// Handle the Routes API
+            		if (response.has("routes")) 
+            		{        			
+            			JSONArray routes = response.getJSONArray("routes");
+            			List<GeoPoint> pathPoints = new ArrayList<GeoPoint>();
+            			for (int r = 0; r < routes.length(); r++)
+                		{
+                			JSONObject route = routes.getJSONObject(r);            			
+                			if (route.has("legs"))
                 			{
-                				JSONObject leg = legs.getJSONObject(l);                				
-                				if (leg.has("steps"))
-                				{
-                					JSONArray steps = leg.getJSONArray("steps");
-                					for (int s = 0; s < steps.length(); s++)
-                    				{        					        					
-                    					JSONObject step = steps.getJSONObject(s);                    					
-                    					if (step.has("polyline"))
-                    					{
-                        					// Render each polyline/path (includes smoothed/curved paths)
-                    						JSONObject polyline = step.getJSONObject("polyline");     
-                    						List<GeoPoint> smoothedPath = decodePolyline(polyline.getString("points"));        					
-                        					int length = smoothedPath.size();        					
-                        					if (length > 1)
+                				JSONArray legs = route.getJSONArray("legs");
+                				for (int l = 0; l < legs.length(); l++)
+                    			{
+                    				JSONObject leg = legs.getJSONObject(l);                				
+                    				if (leg.has("steps"))
+                    				{
+                    					JSONArray steps = leg.getJSONArray("steps");
+                    					for (int s = 0; s < steps.length(); s++)
+                        				{        					        					
+                        					JSONObject step = steps.getJSONObject(s);                    					
+                        					if (step.has("polyline"))
                         					{
-                        						// Create a line between two points (i.e. a step; the atomic unit of a route)
-                        						int point;
-                        						for (point = 1; point < length; point++)
-                        						{
-                        							GeoPoint A = smoothedPath.get(point - 1), B = smoothedPath.get(point);
-                        							pathPoints.add(A);
-                        							pathPoints.add(B);
-                        						}
-                        						
-                        						// Scroll to the last point (destination point)
-                            					if (s == steps.length() - 1) 
+                            					// Render each polyline/path (includes smoothed/curved paths)
+                        						JSONObject polyline = step.getJSONObject("polyline");     
+                        						List<GeoPoint> smoothedPath = decodePolyline(polyline.getString("points"));        					
+                            					int length = smoothedPath.size();        					
+                            					if (length > 1)
                             					{
-                            						// Create the destination marker and add it to the map
-                            						GeoPoint destination = smoothedPath.get(point - 1);
-                            						OverlayItem overlay = new OverlayItem(destination, "Destination", "You want to go here");			            						
-                            						markersOverlay.addOverlay(overlay, getResources().getDrawable(R.drawable.blue_marker_resized));
-                            						markersOverlay.commit();            						
-                            						mapController.animateTo(destination);
-                            					}
-                        					} 
-                    					}                    					       					        					        						      					        					        					
-                    				}
-                				}                				
-                			}
-            			}            			
+                            						// Create a line between two points (i.e. a step; the atomic unit of a route)
+                            						int point;
+                            						for (point = 1; point < length; point++)
+                            						{
+                            							GeoPoint A = smoothedPath.get(point - 1), B = smoothedPath.get(point);
+                            							pathPoints.add(A);
+                            							pathPoints.add(B);
+                            						}
+                            						
+                            						// Scroll to the last point (destination point)
+                                					if (s == steps.length() - 1) 
+                                					{
+                                						// Create the destination marker and add it to the map
+                                						GeoPoint destination = smoothedPath.get(point - 1);
+                                						OverlayItem overlay = new OverlayItem(destination, "Destination", "You want to go here");			            						
+                                						markersOverlay.addOverlay(overlay, getResources().getDrawable(R.drawable.blue_marker_resized));
+                                						markersOverlay.commit();            						
+                                						mapController.animateTo(destination);
+                                					}
+                            					} 
+                        					}                    					       					        					        						      					        					        					
+                        				}
+                    				}                				
+                    			}
+                			}            			
+                		}
+                		// Render the complete route polyline
+                		Overlay path = new PathOverlay(pathPoints.toArray(new GeoPoint[pathPoints.size()]), mapView);
+                		directionsPolyline.add(path);
+                		mapView.getOverlays().add(path);
             		}
-            		// Render the complete route polyline
-            		Overlay path = new PathOverlay(pathPoints.toArray(new GeoPoint[pathPoints.size()]), mapView);
-            		directionsPolyline.add(path);
-            		mapView.getOverlays().add(path);
-        		}
-        		else if (response.has("results"))
-        		{
-        			if (response.has("html_attributions"))
-        			{
+            		// Handle the Places API
+            		else if (response.has("results"))
+            		{
         				// Present any necessary attributions to the user, if any (required by Google)
-        				JSONArray htmlAttributions = response.getJSONArray("html_attributions");        				
-        				if (htmlAttributions.length() > 0)
-        				{
-        					StringBuilder attributions = new StringBuilder();
-            				for (int a = 0; a < htmlAttributions.length(); a++)
-            					attributions.append(htmlAttributions.getString(a));
-            				produceAlertDialog(this, "Legal Attributions", attributions.toString());	
-        				}        				
-        			}
-        			
-        			if (response.has("results"))
-        			{
-        				JSONArray results = response.getJSONArray("results");
-        				int totalResults = results.length();
-        				if (totalResults <= 0)
-        					produceAlertDialog(this, "No Results", "No results were found!");
-        				else
-        				{
-        					for (int r = 0; r < results.length(); r++)
+            			if (response.has("html_attributions"))
+            			{
+            				JSONArray htmlAttributions = response.getJSONArray("html_attributions");        				
+            				if (htmlAttributions.length() > 0)
             				{
-            					JSONObject result = results.getJSONObject(r);
-            					
-            					// Retrieve the location of the object on the map
-            					int lat = 0, lon = 0;
-            					if (result.has("geometry"))
+            					StringBuilder attributions = new StringBuilder();
+                				for (int a = 0; a < htmlAttributions.length(); a++)
+                					attributions.append(htmlAttributions.getString(a));
+                				produceAlertDialog(this, "Legal Attributions", attributions.toString());	
+            				}        				
+            			}
+            			            			
+        				JSONArray results = response.getJSONArray("results");
+        				int totalResults = results.length();            				
+        				produceAlertDialog(this, "Success!", "Found " + totalResults + " Location(s)");            				
+    					for (int r = 0; r < totalResults; r++)
+        				{
+        					JSONObject result = results.getJSONObject(r);
+        					
+        					// Retrieve the location of the object on the map
+        					int lat = 0, lon = 0;
+        					if (result.has("geometry"))
+        					{
+        						JSONObject geometry = result.getJSONObject("geometry");
+        						if (geometry.has("location"))
+        						{
+        							JSONObject location = geometry.getJSONObject("location");
+        							if (location.has("lat") && location.has("lng"))
+        							{
+        								lat = (int)(location.getDouble("lat") * 1e6);
+        								lon = (int)(location.getDouble("lng") * 1e6);
+        							}
+        								
+        						}
+        					}
+        					
+        					// Create the snippet of the overlay
+        					String id = null, name = null, address = null;
+        					String iconURL = null, type = null, rating = null, hours = null;        					
+        					if (result.has("id"))
+        						id = result.getString("id");
+        					if (result.has("name"))
+        						name = result.getString("name");
+        					if (result.has("formatted_address"))
+        						address = "Address: " + result.getString("formatted_address");
+        					if (result.has("icon"))
+        						iconURL = result.getString("icon");
+        					if (result.has("types"))
+        					{
+        						type = "Type: ";
+        						JSONArray types = result.getJSONArray("types");
+        						int length = types.length();
+        						for (int t = 0; t < length; t++)
+        						{
+        							type += types.getString(t);
+        							if (t != length - 1)
+        								type += ", ";            							
+        						}            							
+        					}
+        					if (result.has("rating"))
+        						rating = "Rating: " + result.getString("rating");
+        					if (result.has("opening_hours"))
+        					{
+        						JSONObject openHours = result.getJSONObject("opening_hours");
+        						if (openHours.has("open_now"))   
+        						{
+        							if (openHours.getBoolean("open_now"))
+        								hours = "(OPEN)";
+        							else
+        								hours = "(CLOSED)";
+        							name += " " + hours;
+        						}
+        					}            						            					            					
+        					
+        					
+        					String[] properties = {address, type, rating};        					
+        					StringBuilder snippet = new StringBuilder();		        					
+        					for (int i = 0; i < properties.length; i++) {		
+        						if (properties[i] != null)			
+        							snippet.append(properties[i] + "\n");            						
+        					}
+        					
+        					if (id != null)
+        					{            						            					
+            					if (iconURL != null)
             					{
-            						JSONObject geometry = result.getJSONObject("geometry");
-            						if (geometry.has("location"))
+            						String request = id + "|" + iconURL;
+            						Log.v("Places Icon", "Request: " + request);
+            						if (isNetworkAvailable())
             						{
-            							JSONObject location = geometry.getJSONObject("location");
-            							if (location.has("lat") && location.has("lng"))
-            							{
-            								lat = (int)(location.getDouble("lat") * 1e6);
-            								lon = (int)(location.getDouble("lng") * 1e6);
-            							}
-            								
+            							new AsynchronousHTTP(mapView, this).execute(request);
             						}
+            						else
+            							produceAlertDialog(this, "Error!", "You are not connected to the Internet!");
             					}
-            					
-            					// Create the snippet of the overlay
-            					String id = null, name = null, address = null;
-            					String iconURL = null, type = null, rating = null, hours = null;        					
-            					if (result.has("id"))
-            						id = result.getString("id");
-            					if (result.has("name"))
-            						name = result.getString("name");
-            					if (result.has("formatted_address"))
-            						address = "Address: " + result.getString("formatted_address");
-            					if (result.has("icon"))
-            						iconURL = result.getString("icon");
-            					if (result.has("types"))
-            					{
-            						type = "Type: ";
-            						JSONArray types = result.getJSONArray("types");
-            						int length = types.length();
-            						for (int t = 0; t < length; t++)
-            						{
-            							type += types.getString(t);
-            							if (t != length - 1)
-            								type += ", ";            							
-            						}            							
-            					}
-            					if (result.has("rating"))
-            						rating = "Rating: " + result.getString("rating");
-            					if (result.has("opening_hours"))
-            					{
-            						JSONObject openHours = result.getJSONObject("opening_hours");
-            						if (openHours.has("open_now"))   
-            						{
-            							if (openHours.getBoolean("open_now"))
-            								hours = "(OPEN)";
-            							else
-            								hours = "(CLOSED)";
-            							name += " " + hours;
-            						}
-            					}            						            					            					
-            					
-            					
-            					String[] properties = {address, type, rating};        					
-            					StringBuilder snippet = new StringBuilder();		        					
-            					for (int i = 0; i < properties.length; i++) {		
-            						if (properties[i] != null)			
-            							snippet.append(properties[i] + "\n");            						
-            					}
-            					
-            					if (id != null)
-            					{            						            					
-	            					if (iconURL != null)
-	            					{
-	            						String request = id + "|" + iconURL;
-	            						Log.v("Places Icon", "Request: " + request);
-	            						if (isNetworkAvailable())
-	            						{
-	            							new AsynchronousHTTP(mapView, this).execute(request);
-	            						}
-	            						else
-	            							produceAlertDialog(this, "Error!", "You are not connected to the Internet!");
-	            					}
-	            					            				
-	        						markersOverlay.addPOIOverlay(new OverlayItem(new GeoPoint(lat, lon), name, snippet.toString()), null, id);
-            					}
-            				}
-            				markersOverlay.commit();
+            					            				
+        						markersOverlay.addPOIOverlay(new OverlayItem(new GeoPoint(lat, lon), name, snippet.toString()), null, id);
+        					}
         				}
+        				markersOverlay.commit();  
         				
-        			}
-        			
-        		}
-        		
-        	}            
+        				// Go to the next page of results
+            			if (response.has("next_page_token"))
+            			{
+            				String nextPageToken = response.getString("next_page_token");
+            				searchPlaces(nextPageToken);
+            			}
+            		}
+            		
+            	}
+        		// The request was not successful - handle any errors
+            	else if (response.getString("status").equals("NOT_FOUND"))
+            	{
+            		produceAlertDialog(this, "Google: NOT_FOUND", "At least one of the specified locations could not be geocoded!");
+            	}
+            	else if (response.getString("status").equals("ZERO_RESULTS"))
+            	{
+            		produceAlertDialog(this, "Zero Results!", "No results were found for the given search query!");
+            	}
+            	else if (response.getString("status").equals("OVER_QUERY_LIMIT"))
+            	{
+            		produceAlertDialog(this, "Google: OVER_QUERY_LIMIT", "You have exceeded your request quota! Try again later!");
+            	}
+            	else if (response.getString("status").equals("REQUEST_DENIED"))
+            	{
+            		produceAlertDialog(this, "Google: REQUEST_DENIED", "Google has denied use of the service by this application! (Might be missing the sensor parameter)");
+            	}
+//            	else if (response.getString("status").equals("INVALID_REQUEST"))
+//            	{
+//            		produceAlertDialog(this, "Google: INVALID_REQUEST!", "You have submitted a malformed/invalid request!");
+//            	}
+            	else if (response.getString("status").equals("UNKNOWN_ERROR"))
+            	{
+            		produceAlertDialog(this, "Google: UNKNOWN_ERROR", "At least one of the specified locations could not be geocoded!");
+            	}
+        	}        	
         }
         catch (JSONException je)
         {
@@ -620,7 +663,25 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	private boolean searchPlaces (String query, GeoPoint boundingCircleCenter)
 	{	
 		// Build HTTP request for Google Places		
-		String request = buildHTTPRequest(query, boundingCircleCenter, true);
+		String request = buildHTTPRequest(query, boundingCircleCenter, null, true);
+		
+		// Set up asynchronous http client and fire request
+		if (isNetworkAvailable())
+			new AsynchronousHTTP(mapView, this).execute(request);
+		else
+		{
+			produceAlertDialog(this, "Error!", "You are not connected to the Internet!");
+			return false;
+		}
+		
+		return true;
+	}
+	
+	// Handle pagination of places results
+	private boolean searchPlaces (String nextPageToken)
+	{	
+		// Build HTTP request for Google Places		
+		String request = buildHTTPRequest(null, null, nextPageToken, true);
 		
 		// Set up asynchronous http client and fire request
 		if (isNetworkAvailable())
