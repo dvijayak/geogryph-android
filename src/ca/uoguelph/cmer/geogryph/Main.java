@@ -16,7 +16,7 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -278,8 +278,10 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	// Construct a valid HTTP request for using the Directions REST API
 	private String buildHTTPRequest (GeoPoint origin, GeoPoint destination, boolean sensor)
 	{
-		String request = getResources().getString(R.string.maps_domain) + "directions/";
-		request += getResources().getString(R.string.maps_output); // Output format (json or xml)
+		Resources resources = getResources();
+		
+		String request = resources.getString(R.string.maps_domain) + "directions/";
+		request += resources.getString(R.string.maps_output); // Output format (json or xml)
 		request += "mode=walking"; // Mode
 		
 		double latOrigin = origin.getLatitudeE6() / 1e6;
@@ -296,6 +298,8 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	// Construct a valid HTTP request for using the Places REST API
 	private String buildHTTPRequest (String query, GeoPoint location, String nextPageToken, boolean sensor)
 	{
+		Resources resources = getResources();
+		
 		String request = new String();
 		
 		// Handle the case of paginated results
@@ -308,8 +312,8 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 			return request;
 		}		
 		
-		request += getResources().getString(R.string.maps_domain) + "place/nearbysearch/";
-		request += getResources().getString(R.string.maps_output);
+		request += resources.getString(R.string.maps_domain) + "place/nearbysearch/";
+		request += resources.getString(R.string.maps_output);
 		
 		// Adds a specific keyword search parameter if and only if provided
 		if (query != null)
@@ -321,16 +325,31 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		double lat = location.getLatitudeE6() / 1e6;
 		double lon = location.getLongitudeE6() / 1e6;
 		request += "&location=" + lat + "," + lon;
-		request += "&radius=" + getResources().getInteger(R.integer.places_textsearch_radius);
+		request += "&radius=" + resources.getInteger(R.integer.places_textsearch_radius);
 		
 		request += "&sensor=" + sensor;
-		request += "&key=" + getResources().getString(R.string.maps_api_key);
+		request += "&key=" + resources.getString(R.string.maps_api_key);
 		Log.v("buildHTTPRequest", request);
 		previousPlacesRequest = request;
 		return request;
 	}
 	
-	// 
+	// Construct a valid HTTP request for getting extra details from a place obtained from a Places search response
+	private String buildHTTPRequest (String reference, boolean sensor)
+	{
+		Resources resources = getResources();
+		
+		String request = resources.getString(R.string.maps_domain) + "place/details/";
+		request += resources.getString(R.string.maps_output);
+		
+		request += "reference=" + reference;
+		
+		request += "&sensor=" + sensor;
+		request += "&key=" + resources.getString(R.string.maps_api_key);
+		
+		Log.v("buildHTTPRequest", request);
+		return request;
+	}
 	
 	// Check if the device has access to the Internet
 	private boolean isNetworkAvailable ()
@@ -457,6 +476,25 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
                 		directionsPolyline.add(path);
                 		mapView.getOverlays().add(path);
             		}
+            		// Handle Places Details            		
+            		else if (response.has("result"))
+            		{
+            			JSONObject result = response.getJSONObject("result");
+            			if (result.has("id"))
+        				{
+        					String id = result.getString("id");
+        					
+        					// Get any extra details of a place to display on the location's info dialog
+        					StringBuilder snippet = new StringBuilder();            			
+                			if (result.has("formatted_address"))            			
+                				snippet.append("Address: " + result.getString("formatted_address"));            				            			            			
+                			if (result.has("formatted_phone_number"))
+                				snippet.append("\n\nTel: " + result.getString("formatted_phone_number"));                     			
+                			
+                			markersOverlay.changeOverlaySnippet(id, snippet.toString());
+                			markersOverlay.commit();
+        				}            			
+            		}
             		// Handle the Places API
             		else if (response.has("results"))
             		{
@@ -511,6 +549,9 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         						name = result.getString("name");
         					if (result.has("formatted_address"))
         						address = "Address: " + result.getString("formatted_address");
+        					else        					
+        						if (result.has("reference"))        					
+        							getPlaceDetails(result.getString("reference"));        							        						        					
         					if (result.has("icon"))
         						iconURL = result.getString("icon");
         					if (result.has("types"))
@@ -544,8 +585,11 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         					String[] properties = {address, type, rating};        					
         					StringBuilder snippet = new StringBuilder();		        					
         					for (int i = 0; i < properties.length; i++) {		
-        						if (properties[i] != null)			
-        							snippet.append(properties[i] + "\n");            						
+        						if (properties[i] != null)	
+        							if (i == properties.length - 1)
+        								snippet.append(properties[i]);
+        							else
+        								snippet.append(properties[i] + "\n\n");            						
         					}
         					
         					if (id != null)
@@ -670,6 +714,22 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		
 		return true;
 	}	
+	
+	private boolean getPlaceDetails (String reference)
+	{
+		// Build HTTP request for Google Places Details
+		String request = buildHTTPRequest(reference, true);
+		
+		// Set up asynchronous http client and fire request
+		if (isNetworkAvailable())
+			new AsynchronousHTTP(mapView, this).execute(request);
+		else
+		{
+			produceAlertDialog(this, "Error!", "You are not connected to the Internet!");
+			return false;
+		}
+		return true;
+	}
 	
 	@Override
 	protected boolean isRouteDisplayed() 

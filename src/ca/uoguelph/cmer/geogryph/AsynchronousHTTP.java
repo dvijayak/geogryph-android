@@ -14,6 +14,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.AsyncTask;
+import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 
@@ -147,11 +148,13 @@ public class AsynchronousHTTP extends AsyncTask<String, Void, Object>
 							
 					// Handle the output separately depending on the type returned
 					if (dataType.equals(String.class))
-					{															;
+					{			
+						Log.v("Async", output.toString());
 						contract.parseJSONResponse(output.toString());	
 					}										
 					else if (dataType.equals(Bitmap.class))
 					{						
+						Log.v("CHANGEMARKER", "CHANGING MARKER" + output.toString());
 						((Main) context).markersOverlay.changeOverlayMarker(overlayKey, new BitmapDrawable((Bitmap)output));
 					}						
 				}						
