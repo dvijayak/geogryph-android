@@ -50,7 +50,7 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 		if (currentZoom < Main.desiredZoom)				
 			mapController.setZoom(Main.desiredZoom);
 		
-		snapToMarker(overlay);
+		snapToMarker(overlay, false);
 	}	
 	
 	public void addPOIOverlay (OverlayItem overlay, Drawable marker, String key)
@@ -59,7 +59,7 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 		if (marker != null)
 			overlay.setMarker(boundCenterBottom(marker));				
 		overlays.put(key, overlay);
-		snapToMarker(overlay);
+		snapToMarker(overlay, false);
 	}
 	
 	public void changeOverlayMarker (String key, Drawable marker)
@@ -111,7 +111,7 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 	{
 		Object[] array = overlays.values().toArray();
 		OverlayItem overlay = (OverlayItem) array[index];		
-		snapToMarker(overlay);
+		snapToMarker(overlay, true);
 		return true;
 	}		
 	
@@ -128,7 +128,7 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 		populate();
 	}
 
-	private void snapToMarker (OverlayItem overlay) 
+	private void snapToMarker (OverlayItem overlay, boolean showInfo) 
 	{
 		GeoPoint currentCenter = mapView.getMapCenter();
 		GeoPoint newCenter = overlay.getPoint();
@@ -139,13 +139,11 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 		editor.putInt("lon", newLon);		
 		editor.commit(); // Do not forget to commit the edits!
 		
-		// If already centered, pop up dialog
-		if (currentCenter.equals(newCenter))		
-			Main.produceAlertDialog(context, overlay.getTitle(), overlay.getSnippet());					
-		// else, center on the marker
-		else
-		{
-			mapController.animateTo(newCenter); // Pans smoothly to the point and sets it as the map center
-		}
+		// Produce dialog with information on the location
+		if (showInfo)
+			Main.produceAlertDialog(context, overlay.getTitle(), overlay.getSnippet());
+		// Center on marker
+		if (!currentCenter.equals(newCenter))		
+			mapController.animateTo(newCenter); // Pans smoothly to the point and sets it as the map center					
 	}		
 }

@@ -234,52 +234,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		super.onPause();
 		me.disableMyLocation();
 	}
-		
-	/*
-	 * Description: Mark a location on the map with a long-press gesture 
-	 * Leave commented - Unstable but working code. Can be completed in the future.
-	 * @Override
-	public boolean dispatchTouchEvent (MotionEvent event)
-	{
-		int threshold = 800; // In milliseconds		;
-		
-		int actionType = event.getAction();
-		
-		switch (actionType)
-		{
-		case MotionEvent.ACTION_DOWN:
-			startTime = event.getEventTime();
-			screenX = (int) event.getX();
-			screenY = (int) event.getY();
-		case MotionEvent.ACTION_MOVE:
 			
-		case MotionEvent.ACTION_UP:
-			long eventTime = event.getEventTime();
-			long downTime = event.getDownTime();
-			
-			if (startTime == downTime)
-			{
-				if ((eventTime - startTime) > threshold)
-				{
-					long totalTime = eventTime - startTime;
-					Log.v("LongPress", Long.toString(totalTime));
-					
-					// Convert screen pixels to a GeoPoint
-					Projection projection = mapView.getProjection();
-					GeoPoint location = projection.fromPixels(screenX, screenY);					
-					
-					// Create an overlay on this location and add to the map
-					// TODO USE GOOGLE GEOCODE SERVICE TO DISPLAY ADDRESS AND POSSIBLY NAME OF LOCATION
-					OverlayItem item = new OverlayItem(location, "Marked Location", location.getLatitudeE6()/1e6 + ", " + location.getLongitudeE6()/1e6);
-					markersOverlay.addOverlay(item, getResources().getDrawable(R.drawable.yellow_dot));
-					markersOverlay.commit();					
-				}
-			}
-		}
-		
-		return super.dispatchTouchEvent(event);
-	}*/	
-	
 	// General function for generating a standard info alert dialog
 	protected static void produceAlertDialog(Context context, String title, String message)
 	{
@@ -489,7 +444,13 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
             		// Handle the Places API
             		else if (response.has("results"))
             		{
-        				// Present any necessary attributions to the user, if any (required by Google)
+            			StringBuilder infoString = new StringBuilder();
+            			            			
+            			JSONArray results = response.getJSONArray("results");        				
+        				int totalResults = results.length();        				
+        				infoString.append("Found " + totalResults + " Location(s)\n\n");
+            			
+        				// Show any necessary attributions to the user, if any (required by Google)
             			if (response.has("html_attributions"))
             			{
             				JSONArray htmlAttributions = response.getJSONArray("html_attributions");        				
@@ -498,18 +459,17 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
             					StringBuilder attributions = new StringBuilder();
                 				for (int a = 0; a < htmlAttributions.length(); a++)
                 					attributions.append(htmlAttributions.getString(a));
-                				produceAlertDialog(this, "Legal Attributions", attributions.toString());	
+                				infoString.append(attributions.toString());                				
             				}        				
-            			}
-            			            			
-        				JSONArray results = response.getJSONArray("results");
-        				int totalResults = results.length();            				
-        				produceAlertDialog(this, "Success!", "Found " + totalResults + " Location(s)");            				
+            			}            			            			        				
+       			
+        				// Present the initial information of the search response to the user
+        				produceAlertDialog(this, "Success!", infoString.toString());
+        				
+    					// Retrieve the location of the object on the map
     					for (int r = 0; r < totalResults; r++)
         				{
-        					JSONObject result = results.getJSONObject(r);
-        					
-        					// Retrieve the location of the object on the map
+        					JSONObject result = results.getJSONObject(r);        					
         					int lat = 0, lon = 0;
         					if (result.has("geometry"))
         					{

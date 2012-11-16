@@ -73,17 +73,8 @@ public class AsynchronousHTTP extends AsyncTask<String, Void, Object>
 				// Expecting an image (PNG) download
 				if (trueUrl.endsWith(".png"))
 				{
-//					bis = new BufferedInputStream(con.getInputStream());
-//					byte[] response =
 					Bitmap bitmap = BitmapFactory.decodeStream((InputStream)con.getInputStream());
-					output = bitmap;
-//					br = new BufferedReader(new InputStreamReader(con.getInputStream()));
-//					String line = "";
-//					StringBuilder result = new StringBuilder();	// StringBuilder.append performs much better than concatenating Strings			
-//					while ((line = br.readLine()) != null)				
-//						result.append(line); // Concatenate all input strings into one line								
-//					
-//					output = result.toString();	
+					output = Bitmap.createScaledBitmap(bitmap, 128, 128, false);
 				}
 				// ...else, the request is expected to return a String response
 				else
