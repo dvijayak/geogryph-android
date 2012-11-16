@@ -10,7 +10,7 @@
     <string name="menu_list">Buildings</string>
     <string name="menu_about">About</string>
     <string name="menu_empty">Empty</string>
-    <string name="searchable_hint">Search POI</string>
+    <string name="searchable_hint">Search point of interest</string>
     <string name="dialog_buildings_title">Campus Buildings</string>
     <string name="dialog_about_title">About GeoGryph</string>
     <string name="dialog_about_body">

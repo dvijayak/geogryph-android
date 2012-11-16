@@ -1,0 +1,14 @@
+/*******************/
+/*** Attributions ***/
+/*******************/
+
+res/drawable/me.png
+		Author: Peter Burdette
+		Website: http://aeriondesign.com   
+		License: CC (http://creativecommons.org/licenses/by-sa/3.0/)
+		
+res/drawable/blue_marker.png
+		Author: Peter Burdette (original, see me.png)
+		Website: http://aeriondesign.com   
+		License: CC (http://creativecommons.org/licenses/by-sa/3.0/)
+

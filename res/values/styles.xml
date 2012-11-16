@@ -1,5 +1,13 @@
-<resources>
-
-    <style name="AppTheme" parent="android:Theme.Light" />
-
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <style name="AppTheme" parent="android:Theme.Holo" />
+	<style name="SplashThemePortrait" parent="android:Theme.Holo.Wallpaper" >
+	    <item name="android:windowNoTitle">true</item>
+	    <item name="android:windowBackground">@drawable/cmer_768x1280</item>	    
+	    <item name="android:windowFrame">@null</item>
+	</style>
+	<style name="SplashThemeLandscape" parent="android:Theme.Holo.Wallpaper" >
+	    <item name="android:windowNoTitle">true</item>
+	    <item name="android:windowBackground">@drawable/cmer_1280x768</item>	    
+	    <item name="android:windowFrame">@null</item>
+	</style>
 </resources>

@@ -11,16 +11,20 @@ import org.json.JSONObject;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Surface;
+import android.view.WindowManager;
 import android.widget.SearchView;
 import android.widget.SearchView.OnQueryTextListener;
 
@@ -35,9 +39,8 @@ import com.google.android.maps.OverlayItem;
 public class Main extends MapActivity implements CampusBuildingsDialogFragment.Contract, AsynchronousHTTP.Contract, SharedPreferences, Runnable //, OnLongClickListener, OnTouchListener
 {
 	// UI objects
-	private SearchView searchView;
-	/*private long startTime = 0;
-	private int screenX, screenY;*/	
+	private Dialog splashDialog;
+	private SearchView searchView;	
 	
 	// Map objects & parameters
 	private MyLocationOverlay me;
@@ -66,11 +69,21 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) 
-    {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);  
-        buildingsDialog = new CampusBuildingsDialogFragment();        
+    {			
+        super.onCreate(savedInstanceState);        
+        setContentView(R.layout.main);        
         
+		// Show splash screen
+        // Show portrait or landscape splash depending on current rotation (orientation)
+        int rotation = ((WindowManager) getSystemService(WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+        if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270){
+        	splashDialog = new Dialog(this, R.style.SplashThemeLandscape); System.out.println("YEEEE");}        	
+        else
+        	splashDialog = new Dialog(this, R.style.SplashThemePortrait);
+		splashDialog.setContentView(R.layout.splash);
+		splashDialog.setCancelable(false);
+		splashDialog.show();
+		                       
         // Initializing the map        
         mapView = (MapView) findViewById(R.id.mapview);
         mapView.preLoad();
@@ -81,19 +94,21 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         List<Overlay> mapOverlays = mapView.getOverlays();
         me = new GeoMyLocationOverlay(this, mapView);
         mapView.postInvalidate();
-        mapOverlays.add(me);
+        mapOverlays.add(me);        
+        // Attempt to center map on user's current location
 		try
 		{
 			mapController.animateTo(me.getMyLocation());
 		}
 		catch (java.lang.NullPointerException e)
-		{
+		{						
+			// Defer until fix can be obtained
 			me.runOnFirstFix(new Thread(this));
 			mapController.animateTo(stone_gordon);
 		}
         mapController.setZoom(desiredZoom);                             
                                
-        // Campus buildings        
+        // Campus buildings                
         String title[] = getResources().getStringArray(R.array.buildings_title);
         String snippet[] = getResources().getStringArray(R.array.buildings_snippet);
         int lat[] = getResources().getIntArray(R.array.buildings_lat);
@@ -102,6 +117,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         buildings = new OverlayItem[totalBuildings];    ;   
         for (int i = 0; i < totalBuildings; i++)
         	buildings[i] = new OverlayItem(new GeoPoint(lat[i], lon[i]), title[i], snippet[i]);
+        buildingsDialog = new CampusBuildingsDialogFragment();
         
         markersOverlay = new GeoItemizedOverlay(getResources().getDrawable(R.drawable.university_resized), this, mapView);       
         mapOverlays.add(markersOverlay);
@@ -131,6 +147,14 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
         }
 	}
 	
+    // Scroll to the user's current location upon successfully receiving a valid fix
+	@Override
+	public void run() 
+	{		
+		mapController.animateTo(me.getMyLocation());
+		splashDialog.dismiss();
+	}    
+	
     @TargetApi(14)
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) 
@@ -147,8 +171,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		searchView.setOnQueryTextListener(new OnQueryTextListener()
 			{
 				@Override
-				public boolean onQueryTextSubmit(String query) {
-					Log.v("Query", "Query: " + query);
+				public boolean onQueryTextSubmit(String query) {					
 					if (query.equalsIgnoreCase("any") || query.equalsIgnoreCase("all") || query.equalsIgnoreCase("anything"))
 					{
 						searchPlaces(null, campus_center);
@@ -243,13 +266,6 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		dialog.setMessage(message);
 		dialog.show();
 	}
-
-    // Scroll to the user's current location upon successfully receiving a valid fix
-	@Override
-	public void run() 
-	{
-		mapController.animateTo(me.getMyLocation());
-	}    
 
 	// Implements the contract defined by CampusBuildingsDialogFragment
 	@Override

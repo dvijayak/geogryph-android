@@ -26,21 +26,23 @@ public final class R {
         public static final int blue_dot=0x7f020001;
         public static final int blue_marker=0x7f020002;
         public static final int blue_marker_resized=0x7f020003;
-        public static final int expand=0x7f020004;
-        public static final int ic_action_search=0x7f020005;
-        public static final int ic_action_star=0x7f020006;
-        public static final int ic_launcher=0x7f020007;
-        public static final int list=0x7f020008;
-        public static final int mark=0x7f020009;
-        public static final int me=0x7f02000a;
-        public static final int me_resized=0x7f02000b;
-        public static final int plot=0x7f02000c;
-        public static final int red_dot=0x7f02000d;
-        public static final int remove=0x7f02000e;
-        public static final int save=0x7f02000f;
-        public static final int university=0x7f020010;
-        public static final int university_resized=0x7f020011;
-        public static final int yellow_dot=0x7f020012;
+        public static final int cmer_1280x768=0x7f020004;
+        public static final int cmer_768x1280=0x7f020005;
+        public static final int expand=0x7f020006;
+        public static final int ic_action_search=0x7f020007;
+        public static final int ic_action_star=0x7f020008;
+        public static final int ic_launcher=0x7f020009;
+        public static final int list=0x7f02000a;
+        public static final int mark=0x7f02000b;
+        public static final int me=0x7f02000c;
+        public static final int me_resized=0x7f02000d;
+        public static final int plot=0x7f02000e;
+        public static final int red_dot=0x7f02000f;
+        public static final int remove=0x7f020010;
+        public static final int save=0x7f020011;
+        public static final int university=0x7f020012;
+        public static final int university_resized=0x7f020013;
+        public static final int yellow_dot=0x7f020014;
     }
     public static final class id {
         public static final int mapview=0x7f0b0000;
@@ -59,6 +61,7 @@ public final class R {
     public static final class layout {
         public static final int dialog_about=0x7f030000;
         public static final int main=0x7f030001;
+        public static final int splash=0x7f030002;
     }
     public static final class menu {
         public static final int main=0x7f0a0000;
@@ -85,6 +88,8 @@ public final class R {
     }
     public static final class style {
         public static final int AppTheme=0x7f090000;
+        public static final int SplashThemeLandscape=0x7f090002;
+        public static final int SplashThemePortrait=0x7f090001;
     }
     public static final class xml {
         public static final int searchable=0x7f040000;
