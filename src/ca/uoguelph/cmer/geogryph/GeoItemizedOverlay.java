@@ -6,7 +6,6 @@ import java.util.Map;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
@@ -70,8 +69,8 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 			OverlayItem overlay = overlays.get(key);
 			if (marker != null)
 				overlay.setMarker(boundCenterBottom(marker));
-			else {
-				overlay.setMarker(null); Log.v("ChangeOverlayMarker", "MARKER IS NULL");}
+			else
+				overlay.setMarker(null);
 			mapView.invalidate();
 		}
 	}
@@ -79,8 +78,7 @@ public class GeoItemizedOverlay extends ItemizedOverlay<OverlayItem>
 	public void changeOverlaySnippet (String key, String snippet)
 	{
 		if (containsOverlay(key))
-		{
-			Log.v("CHANGESNIPPET", "Changing Snippet");
+		{			
 			// First, remove the overlay
 			OverlayItem overlay = overlays.get(key);
 			GeoPoint point = overlay.getPoint();

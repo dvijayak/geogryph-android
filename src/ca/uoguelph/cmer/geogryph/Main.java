@@ -20,7 +20,6 @@ import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Surface;
@@ -308,7 +307,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		{
 			request = previousPlacesRequest;
 			request += "&pagetoken=" + nextPageToken;
-			Log.v("buildHTTPRequest", request);
+			
 			return request;
 		}		
 		
@@ -329,7 +328,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		
 		request += "&sensor=" + sensor;
 		request += "&key=" + resources.getString(R.string.maps_api_key);
-		Log.v("buildHTTPRequest", request);
+		
 		previousPlacesRequest = request;
 		return request;
 	}
@@ -347,7 +346,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
 		request += "&sensor=" + sensor;
 		request += "&key=" + resources.getString(R.string.maps_api_key);
 		
-		Log.v("buildHTTPRequest", request);
+		
 		return request;
 	}
 	
@@ -597,7 +596,7 @@ public class Main extends MapActivity implements CampusBuildingsDialogFragment.C
             					if (iconURL != null)
             					{
             						String request = id + "|" + iconURL;
-            						Log.v("Places Icon", "Request: " + request);
+            						
             						if (isNetworkAvailable())
             						{
             							new AsynchronousHTTP(mapView, this).execute(request);
